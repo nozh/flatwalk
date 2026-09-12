@@ -1,10 +1,12 @@
-import { access, cp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import type { FlatModel } from "@flatwalk/contract";
-import { bundleToModel, fetchListing, type ListingBundle } from "@flatwalk/firecrawl";
+import { bundleToModel, fetchListing as defaultFetchListing, type ListingBundle } from "@flatwalk/firecrawl";
 import { refuseSilentLive, requireLiveMode, type AdapterMode } from "./adapters.ts";
 import type { ParsedArgs } from "./args.ts";
 import { CliError, EXIT } from "./errors.ts";
+import { emptyHistory, writeHistory } from "./history.ts";
 import { prepareRunDir } from "./layout.ts";
 import { loadModelFile, writeModelFiles } from "./model-io.ts";
 import { defaultFixtureDir, defaultSeedModel, resolveExistingPath } from "./resolve-path.ts";
@@ -136,7 +138,17 @@ async function resolveSeedFile(args: ParsedArgs): Promise<string> {
   return seedFile;
 }
 
-export async function runImport(args: ParsedArgs, adapters: AdapterMode): Promise<void> {
+export type ImportFetchListing = typeof defaultFetchListing;
+
+export type ImportDeps = {
+  fetchListing?: ImportFetchListing;
+};
+
+export async function runImport(
+  args: ParsedArgs,
+  adapters: AdapterMode,
+  deps: ImportDeps = {},
+): Promise<void> {
   if (!args.runDir) throw new CliError(EXIT.usage, "import requires a run directory");
   if (!args.from && !args.url) {
     throw new CliError(
@@ -153,12 +165,18 @@ export async function runImport(args: ParsedArgs, adapters: AdapterMode): Promis
 
   if (args.url) {
     requireLiveMode(adapters, "import --url");
-    const fetched = await fetchListing({
-      url: args.url,
-      assetsDir: paths.materials,
-      writeManifest: false,
-    });
-    bundle = await copyBundleAssets(fetched, paths.materials);
+    const fetchListing = deps.fetchListing ?? defaultFetchListing;
+    const staging = await mkdtemp(path.join(os.tmpdir(), "flatwalk-import-"));
+    try {
+      const fetched = await fetchListing({
+        url: args.url,
+        assetsDir: staging,
+        writeManifest: false,
+      });
+      bundle = await copyBundleAssets(fetched, paths.materials);
+    } finally {
+      await rm(staging, { recursive: true, force: true });
+    }
   } else {
     const fromDir = await resolveExistingPath(args.from!);
     if (!fromDir) {
@@ -184,6 +202,7 @@ export async function runImport(args: ParsedArgs, adapters: AdapterMode): Promis
     const seedFile = await resolveSeedFile(args);
     const model = await relocateModelAssetUrls(paths.root, await loadModelFile(seedFile));
     const written = await writeModelFiles(paths.root, model);
+    await writeHistory(paths.root, emptyHistory(model));
     console.log(
       `import: seeded ${model.id} rev ${model.revision} → ${written.revision} (manual fixture, not recognition)`,
     );
@@ -197,5 +216,6 @@ export async function runImport(args: ParsedArgs, adapters: AdapterMode): Promis
     }),
   );
   const written = await writeModelFiles(paths.root, model);
+  await writeHistory(paths.root, emptyHistory(model));
   console.log(`import: bundleToModel rev ${model.revision} → ${written.revision} (empty geometry; parse is separate)`);
 }

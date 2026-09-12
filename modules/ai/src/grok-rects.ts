@@ -96,8 +96,8 @@ const OVERLAY: GrokRectsOverlayStatus = {
   status: "blocked",
   dependency: "builder.renderOverlay",
   note: [
-    "Matcher overlay must be renderOverlay(acceptedModel, planPng) from @flatwalk/builder.",
-    "That function is not exported yet (Builder task 2.2). grok-rects does not ship a second renderer",
+    "Matcher overlay must be renderOverlay(acceptedModel, planPng) from @flatwalk/builder/node in Node",
+    "(browser: @flatwalk/builder with Canvas, never @napi-rs/canvas). grok-rects does not ship a second renderer",
     "and does not claim the pipeline through Photo Matcher is ready.",
   ].join(" "),
 };

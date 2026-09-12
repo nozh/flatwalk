@@ -1,5 +1,6 @@
 import { validateFlatModel, type FlatModel } from '@flatwalk/contract';
 import { BuilderError } from './errors.ts';
+import { createBrowserCanvasHost } from './overlay-browser.ts';
 import { drawBanner, drawMarks, fontSizeFor } from './overlay-draw.ts';
 import type { OverlayCanvasHost, OverlaySurface } from './overlay-host.ts';
 import { overlayIds, overlayMarks } from './overlay-marks.ts';
@@ -28,13 +29,13 @@ export type RenderOverlayOptions = {
   host?: OverlayCanvasHost;
 };
 
-async function defaultHost(): Promise<OverlayCanvasHost> {
+function defaultHost(): OverlayCanvasHost {
   if (typeof document !== 'undefined' && typeof document.createElement === 'function') {
-    const { createBrowserCanvasHost } = await import('./overlay-browser.ts');
     return createBrowserCanvasHost();
   }
-  const { createNodeCanvasHost } = await import('./overlay-node.ts');
-  return createNodeCanvasHost();
+  throw new Error(
+    "renderOverlay's browser entry has no Node canvas. Import from '@flatwalk/builder/node' or pass options.host.",
+  );
 }
 
 function validModel(model: FlatModel): FlatModel {
@@ -112,7 +113,7 @@ export async function renderOverlay(
   options: RenderOverlayOptions = {},
 ): Promise<OverlayResult> {
   const valid = validModel(model);
-  const host = options.host ?? (await defaultHost());
+  const host = options.host ?? defaultHost();
   const ids = overlayIds(valid);
   const diagnostics: string[] = [];
   const pxPerMeter = scaleOf(valid);

@@ -5,7 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { createCanvas } from '@napi-rs/canvas';
 import { describe, expect, it } from 'vitest';
 import type { FlatModel } from '@flatwalk/contract';
-import { BuilderError, renderOverlay } from '../src/index.ts';
+import { BuilderError, renderOverlay } from '../src/node.ts';
+import { renderOverlay as browserRenderOverlay } from '../src/index.ts';
 import { oneRoom } from './helpers.ts';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -29,6 +30,10 @@ async function pngSize(bytes: Uint8Array): Promise<{ width: number; height: numb
 }
 
 describe('renderOverlay', () => {
+  it('keeps Node canvas off the browser entry unless a host is passed', async () => {
+    await expect(browserRenderOverlay(oneRoom())).rejects.toThrow(/@flatwalk\/builder\/node/);
+  });
+
   it('aligns marks to the source PNG size when pxPerMeter is known', async () => {
     const model = oneRoom();
     model.assets = {

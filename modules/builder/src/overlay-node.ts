@@ -11,7 +11,7 @@ function surface(width: number, height: number): OverlaySurface {
   };
 }
 
-/** Node adapter. Browser consumers pass a host or use createBrowserCanvasHost. */
+/** Node adapter. Not imported by `@flatwalk/builder` — use `@flatwalk/builder/node`. */
 export function createNodeCanvasHost(): OverlayCanvasHost {
   return {
     create: surface,

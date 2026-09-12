@@ -89,7 +89,7 @@ if (patch) {
 
 ## photo-matcher (задача 3.2)
 
-Один вызов Grok vision: overlay принятой ревизии + фото → патч `assets.<id>.room/faces/look/meta`. Overlay передаётся явным входом (`renderOverlay` из Builder); этот пакет его не рисует.
+Один вызов Grok vision: overlay принятой ревизии + фото → патч `assets.<id>.room/faces/look/meta`. Overlay передаётся явным входом (`renderOverlay` из `@flatwalk/builder/node` в Node); этот пакет его не рисует.
 
 ```ts
 import { apply } from "@flatwalk/resolver";

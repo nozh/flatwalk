@@ -1,0 +1,29 @@
+{
+  "name": "@flatwalk/firecrawl",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "bin": {
+    "flatwalk-fetch": "./src/cli.ts"
+  },
+  "scripts": {
+    "fetch": "tsx src/cli.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@flatwalk/contract": "*",
+    "dotenv": "^16.6.1",
+    "firecrawl": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.1",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}

@@ -73,7 +73,7 @@ const MODEL_TEXT: Record<string, string> = {
   'Холл': 'Hall', 'Спальня с террасой': 'Bedroom with terrace', 'Спальня с рабочим местом': 'Bedroom with workspace',
   'узкий коридор между спальней, ванной, лоджией и столовой; фотографий нет': 'narrow corridor between the bedroom, bathroom, loggia, and dining area; no photos are available',
 };
-const modelText = (value: string): string => MODEL_TEXT[value] ?? value;
+export const modelText = (value: string): string => MODEL_TEXT[value] ?? value;
 const DEFAULTS: { key: 'wallHeight' | 'doorHeight' | 'windowSill' | 'windowHeight'; subject: string }[] = [
   { key: 'wallHeight', subject: 'Ceiling height' },
   { key: 'doorHeight', subject: 'Door height' },

@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import type { FlatModel } from '@flatwalk/contract';
 import type { WalkPrep } from './walk-prep';
 import { PLAYER_RADIUS, canStand, movePlayer, roomAt, type Point } from './walk-math';
+import { modelText } from './view-model';
 
 /**
  * three.js stage: Builder's Group plus lights, three camera modes and first-person controls.
@@ -115,8 +116,9 @@ export function mountWalkScene(host: HTMLElement, model: FlatModel, prep: WalkPr
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'room-label';
-    button.textContent = room.label;
-    button.title = walk.available ? `Enter: ${room.label}` : room.label;
+    const label = modelText(room.label);
+    button.textContent = label;
+    button.title = walk.available ? `Enter: ${label}` : label;
     button.addEventListener('click', () => hooks.onLabel?.(roomId));
     labelLayer.append(button);
     return { roomId, anchor: room.anchor, button };

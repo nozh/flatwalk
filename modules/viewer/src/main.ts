@@ -23,9 +23,10 @@ function paint(state: ViewerState): void {
     button.addEventListener('click', () => window.location.reload());
   }
   if (state.kind !== 'ready') return;
-  const { model, prep } = state;
+  const { model, prep, report } = state;
   controller = mountListing(root, listingView(model, state.source), {
     mountScene: mountScenePlaceholder,
+    ...(report ? { report } : {}),
     ...(prep ? { prep, mountWalk: (host, hooks) => mountWalkScene(host, model, prep, hooks) } : {}),
   });
 }

@@ -3,6 +3,7 @@ import type { ListingView, PhotoView } from './view-model';
 import type { ReportResult } from './load-report';
 import type { Overlay } from './plan-overlay';
 import type { WalkPrep } from './walk-prep';
+import { walkVerification, type WalkVerification } from './report-status';
 import { countLabel, formatArea, formatMeters, formatPercent } from './labels';
 import { escapeHtml, icon } from './html';
 
@@ -149,16 +150,7 @@ function ceilingSentence(view: ListingView): string {
 }
 
 function verificationSentence(report: ReportResult): string {
-  switch (report.status) {
-    case 'ok':
-      return report.report.walkReady ? 'Геометрия проверена, прогулка возможна.' : 'Геометрия проверена, прогулка пока не готова.';
-    case 'stale':
-      return 'Отчёт проверки устарел: геометрия не проверена.';
-    case 'invalid':
-      return 'Отчёт проверки повреждён: геометрия не проверена.';
-    default:
-      return 'Геометрия не проверена: отчёта Validator нет.';
-  }
+  return walkVerification(report).headline;
 }
 
 export function renderAssumptionStrip(view: ListingView, report: ReportResult): string {
@@ -169,26 +161,47 @@ export function renderAssumptionStrip(view: ListingView, report: ReportResult): 
     <button type="button" class="text-button" data-action="about">${icon('info')}Подробнее</button>`;
 }
 
-function reportSection(report: ReportResult): string {
+/** Validator messages name rooms by id; the dialog shows the room label instead. Other ids stay as they are. */
+function humanizeIds(text: string, view: ListingView): string {
+  const byId = new Map(view.rooms.map((room) => [room.id, room.label]));
+  return text
+    .replace(/\brooms\.(r\d+)\b/g, (match, id: string) => (byId.has(id) ? `«${byId.get(id)}»` : match))
+    .replace(/\b(r\d+)\b/g, (match, id: string) => (byId.has(id) ? `«${byId.get(id)}»` : match));
+}
+
+function reportSection(report: ReportResult, view: ListingView): string {
   if (report.status === 'missing') {
-    return `<p>Отчёт Validator для этой ревизии не найден. Геометрия, проходимость и масштаб не проверены; площади помещений не считались.</p>`;
+    return `<p>Отчёт Validator для этой ревизии не найден. Связность комнат, ширина проходов и масштаб не проверены; площади помещений не подтверждены.</p>`;
   }
-  if (report.status === 'stale') return `<p>Найден отчёт для другой модели или ревизии. Он устарел и не учитывается: геометрия не проверена.</p>`;
-  if (report.status === 'invalid') return `<p>Файл отчёта не соответствует контракту и не учитывается: геометрия не проверена.</p>`;
+  if (report.status === 'stale') {
+    return `<p>Найден отчёт проверки, но он относится к другой модели или ревизии и не учитывается: связность комнат и ширина проходов не проверены.</p>`;
+  }
+  if (report.status === 'invalid') return `<p>Файл отчёта не соответствует контракту и не учитывается: связность комнат и ширина проходов не проверены.</p>`;
 
   const { report: data } = report;
-  const count = (status: string) => data.checks.filter((check) => check.status === status).length;
-  const failed = data.checks.filter((check) => check.status === 'fail');
+  const verification = walkVerification(report);
+  const human = (text: string) => escapeHtml(humanizeIds(text, view));
+  const byStatus = (status: string) => data.checks.filter((check) => check.status === status);
+  const count = (status: string) => byStatus(status).length;
   const totals = [
     `${count('pass')} ${count('pass') === 1 ? 'пройдена' : 'пройдено'}`,
     `${count('fail')} не ${count('fail') === 1 ? 'пройдена' : 'пройдено'}`,
     `${count('unverified')} не ${count('unverified') === 1 ? 'проверена' : 'проверено'}`,
     `${count('skipped')} ${count('skipped') === 1 ? 'пропущена' : 'пропущено'}`,
   ];
-  return `<p>Прогулка: геометрия ${data.walkReady ? 'готова' : 'не готова'}. Подтверждено ${formatPercent(data.confirmation)} проверок.</p>
-    <p>Проверок ${data.checks.length}: ${escapeHtml(totals.join(', '))}.</p>
-    ${failed.length ? `<ul class="about-checks">${failed.map((check) => `<li>${escapeHtml(check.message)}</li>`).join('')}</ul>` : ''}
-    ${data.review.items.length ? `<p>На ревью ${countLabel(data.review.items.length, ['пункт', 'пункта', 'пунктов'])}:</p><ul class="about-review">${data.review.items.map((item) => `<li>${escapeHtml(item.reason)}${item.suggestion ? ` <span class="muted">${escapeHtml(item.suggestion)}</span>` : ''}</li>`).join('')}</ul>` : ''}`;
+  const list = (status: string, className: string, title: string) => {
+    const items = byStatus(status);
+    if (!items.length) return '';
+    return `<p class="about-list-title">${title}</p><ul class="${className}">${items.map((check) => `<li>${human(check.message || check.checkId)}</li>`).join('')}</ul>`;
+  };
+  return `<p><b>${escapeHtml(verification.headline)}</b></p>
+    <ul class="about-navigation">${verification.lines.map((item) => `<li>${human(item)}</li>`).join('')}</ul>
+    <p>Подтверждённых сведений модели: ${formatPercent(data.confirmation)} (доля сущностей, подтверждённых человеком или с уверенностью не ниже 0,6; это не доля пройденных проверок и не доля измерений).</p>
+    <p>Проверок ${data.checks.length}: ${escapeHtml(totals.join(', '))}. Отчёт для модели ${escapeHtml(data.modelId)}, ревизия ${data.revision}.</p>
+    ${list('fail', 'about-failed', 'Не пройдено')}
+    ${list('unverified', 'about-unverified', 'Не проверено: данных для проверки нет, это не «пройдено»')}
+    ${list('skipped', 'about-skipped', 'Пропущено: проверка в этом срезе не выполняется')}
+    ${data.review.items.length ? `<p>На ревью ${countLabel(data.review.items.length, ['пункт', 'пункта', 'пунктов'])}:</p><ul class="about-review">${data.review.items.map((item) => `<li>${human(item.reason)}${item.suggestion ? ` <span class="muted">${human(item.suggestion)}</span>` : ''}</li>`).join('')}</ul>` : ''}`;
 }
 
 export function renderAbout(view: ListingView, report: ReportResult, source: DataSource, prep?: WalkPrep): string {
@@ -224,7 +237,7 @@ export function renderAbout(view: ListingView, report: ReportResult, source: Dat
       </section>
       <section>
         <h3>Проверка</h3>
-        ${reportSection(report)}
+        ${reportSection(report, view)}
       </section>
       <section>
         <h3>Геометрия и сцена</h3>
@@ -241,14 +254,21 @@ export function renderAbout(view: ListingView, report: ReportResult, source: Dat
 
 export type StageView = 'plan' | 'top' | 'scene' | 'walk';
 
-export function renderStageStatus(activeView: StageView, mode: Overlay['mode'], prep?: WalkPrep, revision?: number): string {
+/** «Прогулка готова» appears only when the report confirmed clearance; otherwise the walk stays a trial. */
+export function walkTitle(verification?: WalkVerification): string {
+  return verification?.level === 'ready' ? 'Прогулка' : 'Пробная прогулка';
+}
+
+export function renderStageStatus(activeView: StageView, mode: Overlay['mode'], prep?: WalkPrep, revision?: number, report?: ReportResult): string {
   if (activeView !== 'plan') {
     if (!prep) return '3D-сцена ещё не построена: Builder не подключён, сцена пуста.';
     if (!prep.scene) return `3D-сцена ещё не построена: ${prep.sceneError ?? 'Builder не собрал модель'}.`;
+    const verification = walkVerification(report ?? { status: 'missing', url: '' });
+    const title = walkTitle(verification);
     const built = `Сцена собрана Builder по ревизии ${revision ?? prep.scene.group.userData.revision ?? 0}: серая коробка L0 без отделки, размеры приблизительные.`;
-    if (activeView === 'walk') return 'Прогулка: WASD или стрелки — идти, Q и E — повернуть, потяните мышью — осмотреться, Esc — выйти. Геометрия L0, размеры приблизительные.';
+    if (activeView === 'walk') return `${title}: ${verification.headline} WASD или стрелки — идти, Q и E — повернуть, потяните мышью — осмотреться, Esc — выйти.`;
     const hint = activeView === 'top' ? 'Вид сверху: колёсико — приблизить, потяните — сдвинуть.' : 'Обзор: потяните, чтобы повернуть, колёсико — приблизить, подпись помещения — войти.';
-    const walk = prep.walk.available ? '' : ` Прогулка недоступна: ${prep.walk.reason}.`;
+    const walk = prep.walk.available ? ` ${title}: ${verification.headline}` : ` Прогулка недоступна: ${prep.walk.reason}.`;
     return `${built} ${hint}${walk}`;
   }
   switch (mode) {
@@ -263,12 +283,14 @@ export function renderStageStatus(activeView: StageView, mode: Overlay['mode'], 
   }
 }
 
-export function renderWalkHud(): string {
+export function renderWalkHud(verification?: WalkVerification): string {
   const keysRow = (items: [string, string, string][]) => items.map(([code, glyph, label]) => `<button type="button" data-key="${code}" aria-label="${escapeHtml(label)}">${glyph}</button>`).join('');
+  const status = verification ?? walkVerification({ status: 'missing', url: '' });
   return `<div class="walk-banner">
-      <span class="live-dot" aria-hidden="true"></span>
+      <span class="live-dot${status.level === 'ready' ? '' : ' is-trial'}" aria-hidden="true"></span>
       <span class="hud-room" id="hud-room">Вне помещений</span>
       <span class="hud-area" id="hud-area"></span>
+      <span class="hud-verification" id="hud-verification" title="${escapeHtml(status.headline)}">${escapeHtml(status.headline)}</span>
       <button type="button" class="hud-button" data-action="lock-mouse" title="Esc — освободить мышь">${icon('eye')}Осмотр мышью</button>
       <button type="button" class="hud-button" data-action="walk-exit">${icon('close')}Выйти</button>
     </div>

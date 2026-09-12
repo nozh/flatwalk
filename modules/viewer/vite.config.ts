@@ -88,6 +88,10 @@ function staticData(): Plugin {
 export default defineConfig({
   root: viewerRoot,
   resolve: { dedupe: ['three'] },
+  // Builder's renderOverlay picks a canvas host at runtime: the Node host imports the native @napi-rs/canvas
+  // binding, which the browser branch never loads. Keep it out of pre-bundling and of the browser bundle.
+  optimizeDeps: { exclude: ['@napi-rs/canvas'] },
+  build: { rollupOptions: { external: ['@napi-rs/canvas'] } },
   server: { port: 5173, strictPort: true, fs: { allow: [viewerRoot, repoRoot] } },
   preview: { port: 4173, strictPort: true },
   plugins: [staticData()],

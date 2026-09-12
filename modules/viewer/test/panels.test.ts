@@ -5,6 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { validateFlatModel, type FlatModel } from '@flatwalk/contract';
 import { listingView } from '../src/view-model';
 import { renderAbout, renderAssumptionStrip, renderRoomList, renderRoomPanel, renderStageStatus } from '../src/panels';
+import { prepareWalk } from '../src/walk-prep';
+import type { ReportResult } from '../src/load-report';
 
 const dir = dirname(fileURLToPath(import.meta.url));
 const reference = JSON.parse(readFileSync(join(dir, '../../../fixtures/54541/flat.model.json'), 'utf8'));
@@ -141,16 +143,20 @@ describe('renderAbout', () => {
         schemaVersion: '0.1' as const, modelId: 'cityexpert-54541', revision: 0, walkReady: false, confirmation: 0.35,
         checks: [
           { checkId: 'contract.schema', layer: 'contract' as const, status: 'pass' as const, severity: 'error' as const, entities: [], message: 'Схема соблюдена' },
-          { checkId: 'navigation.reach', layer: 'navigation' as const, status: 'fail' as const, severity: 'error' as const, entities: ['rooms.r6'], message: 'Комната недостижима от входа' },
+          { checkId: 'navigation.reachable', layer: 'navigation' as const, status: 'fail' as const, severity: 'error' as const, entities: ['rooms.r6'], message: 'Комната недостижима от входа' },
           { checkId: 'scale.doors', layer: 'scale' as const, status: 'unverified' as const, severity: 'warning' as const, entities: [], message: 'Ширина дверей не проверялась' },
         ],
         review: { items: [{ id: 'q1', path: 'rooms.r2', severity: 'warning' as const, reason: 'низкая уверенность' }] },
       },
     };
     const host = mount(renderAbout(view, report, { kind: 'static' }));
-    expect(host.textContent).toContain('не готова');
-    expect(host.textContent).toContain('35 %');
-    expect(host.textContent).toContain('Комната недостижима от входа');
+    expect(host.textContent).toContain('Геометрия не подтверждена: связность комнат не пройдена. Ширина проходов не проверена.');
+    expect(host.textContent).not.toMatch(/прогулка готова/i);
+    expect(host.textContent).toContain('Подтверждённых сведений модели: 35 %');
+    expect(host.textContent).toContain('доля сущностей, подтверждённых человеком или с уверенностью не ниже 0,6');
+    expect(host.textContent).not.toMatch(/35 % проверок/);
+    expect(host.querySelector('.about-failed')?.textContent).toContain('Комната недостижима от входа');
+    expect(host.querySelector('.about-unverified')?.textContent).toContain('Ширина дверей не проверялась');
     expect(host.textContent).toContain('низкая уверенность');
     expect(host.textContent).toContain('1 пройдена');
     expect(host.textContent).toContain('1 не пройдена');
@@ -176,5 +182,61 @@ describe('renderRoomPanel with a walk available', () => {
     const plain = mount(renderRoomPanel(view, 'r1'));
     expect(plain.querySelector('button[data-action="enter-room"]')).toBeNull();
     expect(mount(renderRoomPanel(view, 'all', { walkable: () => true })).querySelector('button[data-action="enter-room"]')).toBeNull();
+  });
+});
+
+const trialReport: ReportResult = {
+  status: 'ok', url: '/validation/rev-000.json',
+  report: {
+    schemaVersion: '0.1', modelId: 'cityexpert-54541', revision: 0, walkReady: true, confirmation: 0.92,
+    checks: [
+      { checkId: 'navigation.reachable', layer: 'navigation', status: 'pass', severity: 'error', entities: [], message: 'Все комнаты достижимы от r2 по проходимым дверям.' },
+      { checkId: 'navigation.start', layer: 'navigation', status: 'pass', severity: 'error', entities: [], message: 'Старт 1 м внутрь от входа лежит в комнате.' },
+      { checkId: 'navigation.clearance', layer: 'navigation', status: 'skipped', severity: 'info', entities: [], message: 'Проход ≥ 0.6 м с учётом радиуса аватара 0.25 м не проверялся.' },
+      { checkId: 'scale.doors', layer: 'scale', status: 'unverified', severity: 'warning', entities: [], message: 'Ширина дверей не проверялась.' },
+    ],
+    review: { items: [{ id: 'q1', path: 'rooms.r6', severity: 'warning', reason: 'Комната r6 без фотографий' }] },
+  },
+};
+
+describe('Validator messages in the about dialog', () => {
+  it('replaces room ids in check and review messages with room names', () => {
+    const about = mount(renderAbout(view, trialReport, { kind: 'fixture' }));
+    expect(about.querySelector('.about-navigation')?.textContent).not.toContain('r2');
+    expect(about.querySelector('.about-review')?.textContent).toContain('«Коридор»');
+    expect(about.querySelector('.about-review')?.textContent).not.toMatch(/\br6\b/);
+  });
+});
+
+describe('walk readiness wording from the report', () => {
+  it('never announces a ready walk from walkReady alone in the strip, the stage status and the about dialog', () => {
+    const strip = mount(renderAssumptionStrip(view, trialReport));
+    expect(strip.textContent).toContain('Связность комнат проверена. Ширина проходов не проверена.');
+    expect(strip.textContent).not.toMatch(/прогулка готова|прогулка возможна/i);
+    const prep = prepareWalk(model(reference));
+    const walkStatus = renderStageStatus('walk', 'plan', prep, 0, trialReport);
+    expect(walkStatus).toContain('Пробная прогулка');
+    expect(walkStatus).toContain('Ширина проходов не проверена');
+    expect(renderStageStatus('top', 'plan', prep, 0, trialReport)).toContain('Пробная прогулка');
+    const about = mount(renderAbout(view, trialReport, { kind: 'fixture' }, prep));
+    const navigation = about.querySelector('.about-navigation')?.textContent ?? '';
+    expect(navigation).toContain('Связность комнат: проверена.');
+    expect(navigation).toContain('Ширина проходов: не проверена (пропущено).');
+    expect(about.textContent).toContain('1 не проверена');
+    expect(about.textContent).toContain('1 пропущена');
+    expect(about.querySelector('.about-skipped')?.textContent).toContain('Проход ≥ 0.6 м с учётом радиуса аватара 0.25 м не проверялся.');
+    expect(about.querySelector('.about-unverified')?.textContent).toContain('Ширина дверей не проверялась.');
+    expect(about.textContent).toContain('Подтверждённых сведений модели: 92 %');
+    expect(about.querySelector('.about-navigation')?.textContent).not.toMatch(/\br\d+\b/);
+    expect(about.textContent).not.toMatch(/прогулка готова/i);
+  });
+
+  it('marks a report for another revision as not applicable', () => {
+    const stale: ReportResult = { ...trialReport, status: 'stale' } as ReportResult;
+    const strip = mount(renderAssumptionStrip(view, stale));
+    expect(strip.textContent).toContain('другой модели или ревизии');
+    const about = mount(renderAbout(view, stale, { kind: 'fixture' }));
+    expect(about.textContent).toContain('другой модели или ревизии');
+    expect(about.querySelector('.about-navigation')).toBeNull();
   });
 });

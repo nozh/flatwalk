@@ -116,3 +116,26 @@ describe('renderShell with Builder and Geometry Core prepared', () => {
     expect(root.textContent).toContain('3D-сцена ещё не построена');
   });
 });
+
+describe('renderShell with a validation report', () => {
+  it('labels the walk as a trial and shows the report status in the HUD when clearance was skipped', () => {
+    const parsed = model(reference);
+    const report = {
+      status: 'ok' as const, url: '/validation/rev-000.json',
+      report: {
+        schemaVersion: '0.1' as const, modelId: 'cityexpert-54541', revision: 0, walkReady: true, confirmation: 0.9,
+        checks: [
+          { checkId: 'navigation.reachable', layer: 'navigation' as const, status: 'pass' as const, severity: 'error' as const, entities: [], message: 'ok' },
+          { checkId: 'navigation.start', layer: 'navigation' as const, status: 'pass' as const, severity: 'error' as const, entities: [], message: 'ok' },
+          { checkId: 'navigation.clearance', layer: 'navigation' as const, status: 'skipped' as const, severity: 'info' as const, entities: [], message: 'не проверялся' },
+        ],
+        review: { items: [] },
+      },
+    };
+    const root = mount(renderShell({ kind: 'ready', model: parsed, source: { kind: 'fixture' }, plan: { status: 'ok' }, prep: prepareWalk(parsed), report }));
+    expect(root.querySelector<HTMLButtonElement>('button[data-action="walk"]')?.disabled).toBe(false);
+    expect(root.querySelector('button[data-action="walk"]')?.textContent).toContain('Пробная прогулка');
+    expect(root.querySelector('#walk-hint')?.textContent).toContain('ширина проходов не проверена');
+    expect(root.querySelector('#hud-verification')?.textContent).toContain('Связность комнат проверена. Ширина проходов не проверена.');
+  });
+});

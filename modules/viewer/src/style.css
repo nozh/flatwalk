@@ -303,6 +303,8 @@ dialog::backdrop { background: #26352799; backdrop-filter: blur(7px); }
 .dialog-body p { margin: 6px 0; }
 .dialog-body ul { padding-left: 18px; margin: 6px 0; }
 .dialog-body li { margin: 4px 0; }
+.about-list-title { margin: 10px 0 2px; font-weight: 600; color: var(--ink); }
+.about-navigation li, .about-failed li { font-weight: 500; color: var(--ink); }
 .dialog-body a { display: inline-flex; align-items: center; gap: 4px; color: var(--green); font-weight: 600; text-decoration: none; }
 .dialog-body a .icon { width: 14px; height: 14px; }
 
@@ -387,7 +389,9 @@ dialog::backdrop { background: #26352799; backdrop-filter: blur(7px); }
   padding: 9px 12px; border-radius: 6px; background: #fffdf4e8; backdrop-filter: blur(8px);
   font-size: 13px; color: #526549; box-shadow: 0 3px 14px #45513914;
 }
-.live-dot { width: 6px; height: 6px; border-radius: 50%; background: #638b4d; }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: #638b4d; flex-shrink: 0; }
+.live-dot.is-trial { background: #c8ab5c; }
+.hud-verification { font-size: 12px; color: #6d5420; background: #fbf6e8; padding: 3px 8px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 42ch; }
 .hud-room { font-weight: 700; color: var(--ink); }
 .hud-area { color: var(--muted); font-size: 12px; }
 .hud-button {
@@ -419,6 +423,7 @@ dialog::backdrop { background: #26352799; backdrop-filter: blur(7px); }
 @media (max-width: 860px) {
   .walk-keys { display: none; }
   .walk-banner { left: 10px; top: 10px; right: 10px; gap: 6px; padding: 7px 9px; font-size: 12px; }
+  .hud-verification { max-width: 100%; white-space: normal; order: 9; flex-basis: 100%; }
   .hud-button { font-size: 0; gap: 0; padding-left: 6px; }
   .hud-button .icon { width: 16px; height: 16px; }
 }

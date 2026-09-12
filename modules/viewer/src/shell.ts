@@ -3,7 +3,8 @@ import { listingView } from './view-model';
 import type { DataSource } from './source';
 import type { ReportResult } from './load-report';
 import { buildOverlay, renderOverlaySvg } from './plan-overlay';
-import { renderAbout, renderAssumptionStrip, renderLightbox, renderRoomList, renderRoomPanel, renderStageStatus, renderWalkHud } from './panels';
+import { renderAbout, renderAssumptionStrip, renderLightbox, renderRoomList, renderRoomPanel, renderStageStatus, renderWalkHud, walkTitle } from './panels';
+import { walkVerification } from './report-status';
 import type { WalkPrep } from './walk-prep';
 import { escapeHtml, icon } from './html';
 
@@ -56,9 +57,14 @@ export function renderShell(state: ViewerState): string {
   const prep = state.prep;
   const hasScene = Boolean(prep?.scene);
   const walkable = Boolean(prep?.walk.available);
+  const verification = walkVerification(report);
+  const walkLabel = walkTitle(verification);
   const walkHint = !prep
     ? 'после сборки 3D-сцены'
-    : prep.walk.available ? 'WASD и мышь, Esc — выход' : `недоступна: ${prep.walk.reason}`;
+    : !prep.walk.available ? `недоступна: ${prep.walk.reason}`
+      : verification.level === 'ready' ? 'WASD и мышь, Esc — выход'
+        : verification.level === 'trial' ? 'ширина проходов не проверена; WASD и мышь, Esc — выход'
+          : 'геометрия не подтверждена отчётом; WASD и мышь, Esc — выход';
   const sceneEmpty = hasScene
     ? ''
     : `<p class="scene-empty">3D-сцена ещё не построена: ${escapeHtml(prep?.sceneError ?? 'Builder не подключён')}.</p>`;
@@ -88,7 +94,7 @@ export function renderShell(state: ViewerState): string {
           </div>
           <button type="button" class="toggle" data-action="toggle-marks" aria-pressed="true"${overlay.mode === 'plan' ? '' : ' hidden'}>${icon('marks')}Разметка модели</button>
           <div class="walk">
-            <button type="button" class="walk-button" data-action="walk"${walkable ? '' : ' disabled'} aria-describedby="walk-hint">${icon('walk')}<span class="walk-label">Прогулка</span></button>
+            <button type="button" class="walk-button" data-action="walk" data-label="${escapeHtml(walkLabel)}"${walkable ? '' : ' disabled'} aria-describedby="walk-hint">${icon('walk')}<span class="walk-label">${escapeHtml(walkLabel)}</span></button>
             <span id="walk-hint" class="walk-hint">${escapeHtml(walkHint)}</span>
           </div>
           <button type="button" class="icon-button stage-fullscreen" data-action="fullscreen" aria-label="Во весь экран" title="Во весь экран">${icon('expand')}</button>
@@ -98,7 +104,7 @@ export function renderShell(state: ViewerState): string {
           <div class="stage-scene" id="stage-scene" hidden>
             <div id="scene-slot" class="scene-slot"></div>
             ${sceneEmpty}
-            <div id="walk-hud" class="walk-hud" hidden>${renderWalkHud()}</div>
+            <div id="walk-hud" class="walk-hud" hidden>${renderWalkHud(verification)}</div>
           </div>
         </div>
         <p class="stage-status" id="stage-status" role="status">${escapeHtml(renderStageStatus('plan', overlay.mode))}</p>

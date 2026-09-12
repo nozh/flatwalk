@@ -1,6 +1,7 @@
 import type { ListingView, PhotoView } from './view-model';
 import type { Overlay } from './plan-overlay';
 import type { WalkPrep } from './walk-prep';
+import type { ReportResult } from './load-report';
 import type { SceneController, SceneHooks } from './walk-scene';
 import { formatArea } from './labels';
 import { facedWalls, galleryCaption, photosFor, renderGallery, renderRoomList, renderRoomPanel, renderStageStatus, type Selection, type StageView } from './panels';
@@ -21,6 +22,8 @@ export type ListingDeps = {
   /** Builder scene with Geometry Core walk; used when prep.scene exists. */
   mountWalk?: WalkMount;
   prep?: WalkPrep;
+  /** Validator report of the shown revision; drives the trial/ready wording. */
+  report?: ReportResult;
 };
 
 const wrap = (index: number, length: number) => (index + length) % length;
@@ -187,8 +190,8 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: Listing
       button.setAttribute('aria-pressed', String(button.dataset.view === next));
     }
     const label = walkButton?.querySelector('.walk-label');
-    if (label) label.textContent = next === 'walk' ? 'Выйти из прогулки' : 'Прогулка';
-    if (stageStatus) stageStatus.textContent = renderStageStatus(next, overlayMode, prep);
+    if (label) label.textContent = next === 'walk' ? 'Выйти из прогулки' : (walkButton?.dataset.label ?? 'Прогулка');
+    if (stageStatus) stageStatus.textContent = renderStageStatus(next, overlayMode, prep, undefined, deps.report);
   }
 
   function switchView(next: 'plan' | 'top' | 'scene'): void {

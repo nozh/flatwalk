@@ -33,6 +33,14 @@ export {
   type GrokRectsOutput,
 } from "./grok-rects.js";
 export {
+  GEOMETRY_REPAIR_FIXTURE_ID,
+  GEOMETRY_REPAIR_MAX_ATTEMPTS,
+  GEOMETRY_REPAIR_MODULE,
+  runGeometryRepair,
+  type GeometryRepairInput,
+  type GeometryRepairOutput,
+} from "./geometry-repair.js";
+export {
   PHOTO_MATCHER_FIXTURE_ID,
   PHOTO_MATCHER_LOW_CONFIDENCE,
   PHOTO_MATCHER_MODULE,

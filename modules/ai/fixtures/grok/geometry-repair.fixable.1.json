@@ -1,0 +1,19 @@
+{
+  "synthetic": true,
+  "note": "Synthetic x.ai chat.completions body for geometry-repair fixture tests. Not a live API result.",
+  "body": {
+    "id": "chatcmpl-synthetic-geometry-repair",
+    "object": "chat.completion",
+    "model": "grok-4.6",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"refuse\":null,\"ops\":[{\"op\":\"set\",\"path\":\"openings.d1.width\",\"value\":0.9}]}"
+        },
+        "finish_reason": "stop"
+      }
+    ]
+  }
+}

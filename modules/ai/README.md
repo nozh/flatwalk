@@ -108,3 +108,23 @@ if (patch) apply(accepted, patch, { schemaVersion: "0.1", modelId: accepted.id, 
 
 Режим `fixture` читает `fixtures/grok/photo-matcher.synthetic.json`. Чужие ID и стена не с контура комнаты отбрасываются в `diagnostics.dropped`. `roomId: null` даёт два `set: null` на room/faces. Защиту `human` делает Resolver. Живой прогон 17 фото в этой задаче не выполнялся.
 
+## geometry-repair (ограниченный срез)
+
+Это **не** `proposeRepair`. Validator по-прежнему не экспортирует авторемонт. Цикл живёт здесь, потому что нужен `createGrokClient`.
+
+```ts
+import { createGrokClient } from "@flatwalk/ai";
+import { runGeometryRepair } from "@flatwalk/ai/geometry-repair";
+
+const grok = createGrokClient({ mode: "fixture" }); // live только явно; нужен XAI_API_KEY
+const result = await runGeometryRepair({
+  model: accepted, // обязателен
+  report,          // ValidationReport этой ревизии; иначе validate() внутри
+  grok,
+});
+```
+
+Вход: принятая модель + диагностика. Выход: кандидат `Patch` (`module: geometry-repair/grok@0.1`) либо отказ. Каждый кандидат идёт в Resolver, затем `validate` принятой ревизии. Максимум две попытки. Стоп: нет геометрических fail, `refuse`, невалидный патч, нет прогресса, тот же набор fail, отказ Resolver, исчерпание попыток. Human не затирается, confidence не повышается. CLI и Viewer не вызывают этот API в этом срезе.
+
+Fixture: `fixtures/grok/geometry-repair.fixable.1.json` (`fixtureId` + `.${attempt}`). Нет файла — `missing-fixture`. Живой x.ai в этой задаче не вызывался.
+

@@ -63,7 +63,8 @@ const fal = createFalClient({ mode: "live" });   // требует FAL_KEY
 
 ```ts
 import { apply } from "@flatwalk/resolver";
-import { createGrokClient, runGrokRects, GROK_RECTS_FALLBACK_WHEN } from "@flatwalk/ai";
+import { createGrokClient } from "@flatwalk/ai";
+import { runGrokRects, GROK_RECTS_FALLBACK_WHEN } from "@flatwalk/ai/grok-rects";
 
 const grok = createGrokClient({ mode: "fixture" }); // live только явно
 const { patch, reason, diagnostics } = await runGrokRects({

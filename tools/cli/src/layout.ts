@@ -1,6 +1,9 @@
 import { mkdir, readdir, rm, stat } from "node:fs/promises";
+import path from "node:path";
 import { CliError, EXIT } from "./errors.ts";
 import { RUN_SUBDIRS, runPaths } from "./paths.ts";
+
+const PRESERVE_ON_FORCE = new Set(["job.json"]);
 
 async function exists(target: string): Promise<boolean> {
   try {
@@ -32,7 +35,11 @@ export async function prepareRunDir(runDir: string, force: boolean): Promise<Ret
         `Run directory already exists: ${paths.root}. Pass --force to replace it. The source fixture is never overwritten.`,
       );
     }
-    await rm(paths.root, { recursive: true, force: true });
+    const entries = await readdir(paths.root);
+    for (const name of entries) {
+      if (PRESERVE_ON_FORCE.has(name)) continue;
+      await rm(path.join(paths.root, name), { recursive: true, force: true });
+    }
   }
   await mkdir(paths.root, { recursive: true });
   for (const name of RUN_SUBDIRS) {

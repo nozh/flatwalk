@@ -37,7 +37,15 @@ export function printViewerOpen(runDir: string): void {
 export function startJobApiServer(jobsRoot: string, env: NodeJS.Dict<string> = process.env): Server {
   const port = Number(env.FLATWALK_JOB_API_PORT ?? JOB_API_PORT);
   const server = createServer((req, res) => {
-    void handleJobHttp(req, res, { jobsRoot, env });
+    void handleJobHttp(req, res, { jobsRoot, env }).catch(() => {
+      if (!res.headersSent) {
+        res.writeHead(400, {
+          "content-type": "application/json; charset=utf-8",
+          "access-control-allow-origin": "*",
+        });
+        res.end(`${JSON.stringify({ error: "Invalid request" })}\n`);
+      }
+    });
   });
   server.listen(port, "127.0.0.1");
   console.log(`serve: job API http://127.0.0.1:${port}/api/jobs (submit URL or fixture; not the prepared demo)`);

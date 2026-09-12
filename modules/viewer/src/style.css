@@ -391,7 +391,7 @@ dialog::backdrop { background: #26352799; backdrop-filter: blur(7px); }
 }
 .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #638b4d; flex-shrink: 0; }
 .live-dot.is-trial { background: #c8ab5c; }
-.hud-verification { font-size: 12px; color: #6d5420; background: #fbf6e8; padding: 3px 8px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 42ch; }
+.hud-verification { font-size: 12px; color: #6d5420; background: #fbf6e8; padding: 3px 8px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 64ch; }
 .hud-room { font-weight: 700; color: var(--ink); }
 .hud-area { color: var(--muted); font-size: 12px; }
 .hud-button {

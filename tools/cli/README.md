@@ -20,6 +20,15 @@ npx tsx src/index.ts serve /tmp/flatwalk-54541 --print-cmd
 
 Live только явно (`--adapters live` / `--live` / `FLATWALK_ADAPTERS=live`). Значения ключей CLI не печатает. Нет ключа — live не подменяется fixture.
 
+Локальная форма Viewer (тот же job API, не второй CLI):
+
+```text
+cd tools/cli
+npx tsx src/index.ts serve /tmp/flatwalk-local-ui
+```
+
+Нужны свободные `127.0.0.1:8787` и `127.0.0.1:5173`. `VITE_JOB_API_URL` выставляет `serve`; ключи провайдеров в `VITE_*` не класть. «Open prepared demo» — `?src=fixture&demo=1`, не fallback при failed job.
+
 Job API (тот же движок, не второй CLI). `serve` без `--print-cmd` слушает `http://127.0.0.1:8787/api/jobs`. Fixture:
 
 ```text

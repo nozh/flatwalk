@@ -26,7 +26,8 @@ export function viewerDevCommand(runDir: string, jobApiUrl = `http://127.0.0.1:$
 }
 
 export function printViewerOpen(runDir: string): void {
-  const cmd = viewerDevCommand(runDir);
+  const port = Number(process.env.FLATWALK_JOB_API_PORT ?? JOB_API_PORT);
+  const cmd = viewerDevCommand(runDir, `http://127.0.0.1:${port}`);
   console.log(`serve: Viewer static reads model/, materials/, validation/ from ${cmd.runDir}`);
   console.log(`serve: ${cmd.shell}`);
   console.log(`serve: cwd ${cmd.cwd}`);
@@ -60,6 +61,11 @@ export async function runServe(runDir: string, options: { start: boolean }): Pro
   const jobsRoot = process.env.FLATWALK_JOBS_ROOT ?? abs;
   await mkdir(jobsRoot, { recursive: true });
   const jobServer = startJobApiServer(path.resolve(jobsRoot));
+  if (process.env.FLATWALK_JOBS_ONLY === "1") {
+    console.log("serve: job API only (Viewer is not started from this process)");
+    await new Promise<void>(() => {});
+    return;
+  }
 
   const cmd = viewerDevCommand(abs, jobApiUrl);
   try {

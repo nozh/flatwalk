@@ -100,9 +100,9 @@ export function renderShell(state: ViewerState): string {
   const sceneEmpty = hasScene
     ? ''
     : `<p class="scene-empty">The 3D scene has not been built: ${escapeHtml(prep?.sceneError ?? 'Builder is not connected')}.</p>`;
-  const listingLink = view.source.url
+  const listingLink = view.source.url && !syntheticFixture
     ? `<a class="topbar-link" href="${escapeHtml(view.source.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(view.source.siteLabel)}${icon('external')}</a>`
-    : `<span>${escapeHtml(view.source.siteLabel)}</span>`;
+    : `<span>${escapeHtml(syntheticFixture ? 'Listing photos are source materials only' : view.source.siteLabel)}</span>`;
 
   return `<div class="app" data-view="plan" data-marks="on"${state.demo || synthetic || syntheticFixture ? ' data-demo="1"' : ''}>
     ${disclosureBanner(state.demo, synthetic, syntheticFixture)}

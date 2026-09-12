@@ -6,7 +6,8 @@
   "main": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./grok-rects": "./src/grok-rects.ts"
+    "./grok-rects": "./src/grok-rects.ts",
+    "./photo-matcher": "./src/photo-matcher.ts"
   },
   "scripts": {
     "test": "vitest run",
@@ -14,11 +15,11 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@flatwalk/contract": "*"
+    "@flatwalk/contract": "*",
+    "@flatwalk/geometry": "*"
   },
   "devDependencies": {
     "@flatwalk/builder": "*",
-    "@flatwalk/geometry": "*",
     "@flatwalk/resolver": "*",
     "@types/node": "^24.3.1",
     "typescript": "^5.9.2",

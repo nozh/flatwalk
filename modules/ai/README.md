@@ -86,3 +86,25 @@ if (patch) {
 Включать fallback, когда выполняется любое из `GROK_RECTS_FALLBACK_WHEN`: пустой `patch` OpenCV, таймаут 60 с, ошибки слоя «Геометрия» после ремонта, нет `PARSER_URL`. Маршрутизацию Orchestrator этот пакет не меняет.
 
 Режим `fixture` читает `fixtures/grok/grok-rects.synthetic.json`. Нет файла — `missing-fixture`, сеть не вызывается. Живой x.ai в этой задаче не вызывался.
+
+## photo-matcher (задача 3.2)
+
+Один вызов Grok vision: overlay принятой ревизии + фото → патч `assets.<id>.room/faces/look/meta`. Overlay передаётся явным входом (`renderOverlay` из Builder); этот пакет его не рисует.
+
+```ts
+import { apply } from "@flatwalk/resolver";
+import { createGrokClient } from "@flatwalk/ai";
+import { runPhotoMatcher } from "@flatwalk/ai/photo-matcher";
+
+const grok = createGrokClient({ mode: "fixture" });
+const { patch, diagnostics } = await runPhotoMatcher({
+  model: accepted, // обязателен
+  overlay: { imageUrl: "parser/overlay-rev-003.png" },
+  photos: [{ assetId: "p3", imageUrl: "materials/p3.jpg" }],
+  grok,
+});
+if (patch) apply(accepted, patch, { schemaVersion: "0.1", modelId: accepted.id, baseRevision: accepted.revision, currentRevision: accepted.revision, changes: [] });
+```
+
+Режим `fixture` читает `fixtures/grok/photo-matcher.synthetic.json`. Чужие ID и стена не с контура комнаты отбрасываются в `diagnostics.dropped`. `roomId: null` даёт два `set: null` на room/faces. Защиту `human` делает Resolver. Живой прогон 17 фото в этой задаче не выполнялся.
+

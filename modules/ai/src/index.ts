@@ -32,3 +32,15 @@ export {
   type GrokRectsInput,
   type GrokRectsOutput,
 } from "./grok-rects.js";
+export {
+  PHOTO_MATCHER_FIXTURE_ID,
+  PHOTO_MATCHER_LOW_CONFIDENCE,
+  PHOTO_MATCHER_MODULE,
+  PHOTO_MATCHER_PROMPT_VERSION,
+  parseGrokPhotoMatcherResult,
+  photoMatcherPrompt,
+  photoMatcherResultSchema,
+  runPhotoMatcher,
+  type PhotoMatcherInput,
+  type PhotoMatcherOutput,
+} from "./photo-matcher.js";

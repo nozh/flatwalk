@@ -1,0 +1,27 @@
+{
+  "name": "@flatwalk/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "flatwalk": "./src/index.ts"
+  },
+  "scripts": {
+    "flatwalk": "tsx src/index.ts",
+    "start": "tsx src/index.ts",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@flatwalk/builder": "file:../../modules/builder",
+    "@flatwalk/contract": "file:../../modules/contract",
+    "@flatwalk/firecrawl": "file:../../modules/firecrawl",
+    "@flatwalk/geometry": "file:../../modules/geometry"
+  },
+  "devDependencies": {
+    "@types/node": "24.3.1",
+    "tsx": "4.20.5",
+    "typescript": "5.9.2",
+    "vitest": "3.2.4"
+  }
+}

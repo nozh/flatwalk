@@ -110,6 +110,52 @@ describe("CLI fixture parse without --seed", () => {
     }
   }, 30_000);
 
+  it("applies a saved grok-rects patch under the imported modelId without a new vision call", async () => {
+    const runDir = await mkdtemp(path.join(os.tmpdir(), "flatwalk-cli-saved-patch-"));
+    const emptyParser = path.join(helpers, "empty-parser.mjs");
+    const savedPatch = path.resolve(
+      cliRoot,
+      "../../../../docs/modules/plan-parser-54541/grok-rects-54541.live.patch.json",
+    );
+    try {
+      expect((await runCli(["import", runDir, "--from", "fixtures/54541"])).code).toBe(0);
+      const parsed = await runCli(["parse", runDir], {
+        FLATWALK_PLAN_PARSER: emptyParser,
+        FLATWALK_SAVED_PARSER_PATCH: savedPatch,
+      });
+      expect(parsed.code, parsed.stderr + parsed.stdout).toBe(0);
+      expect(parsed.stdout).toMatch(/saved grok-rects patch/);
+      expect(parsed.stdout).not.toMatch(/live grok-rects API was called/);
+      expect(parsed.stdout).not.toMatch(/synthetic grok-rects fixture/);
+
+      const latest = JSON.parse(await readFile(path.join(runDir, "model/latest.json"), "utf8")) as {
+        id: string;
+        revision: number;
+        rooms: Record<string, unknown>;
+      };
+      expect(latest.id).toBe("cityexpert-54541");
+      expect(latest.revision).toBe(1);
+      expect(Object.keys(latest.rooms).sort()).toEqual([
+        "bath",
+        "bed_n",
+        "bed_nw",
+        "bed_se",
+        "hall",
+        "kit",
+        "living",
+        "wc",
+      ]);
+
+      const diagnostics = JSON.parse(await readFile(path.join(runDir, "parser/diagnostics.json"), "utf8")) as {
+        savedPatch?: { sourceModelId?: string; liveApiCalled?: boolean };
+      };
+      expect(diagnostics.savedPatch?.sourceModelId).toBe("cityexpert-54541-empty");
+      expect(diagnostics.savedPatch?.liveApiCalled).toBe(false);
+    } finally {
+      await rm(runDir, { recursive: true, force: true });
+    }
+  }, 60_000);
+
   it("refuses a parser patch that is not a Contract Patch and keeps rev 0", async () => {
     const runDir = await mkdtemp(path.join(os.tmpdir(), "flatwalk-cli-badpatch-"));
     const badParser = path.join(helpers, "bad-patch-parser.mjs");

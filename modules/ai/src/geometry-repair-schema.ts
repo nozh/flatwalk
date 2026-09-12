@@ -1,7 +1,7 @@
 import { OpSchema, type FlatModel, type Op } from "@flatwalk/contract";
 
 export const GEOMETRY_REPAIR_MODULE = "geometry-repair/grok@0.1";
-export const GEOMETRY_REPAIR_PROMPT_VERSION = "0.1";
+export const GEOMETRY_REPAIR_PROMPT_VERSION = "0.2";
 export const GEOMETRY_REPAIR_MAX_ATTEMPTS = 2;
 export const GEOMETRY_REPAIR_FIXTURE_ID = "grok/geometry-repair";
 
@@ -155,9 +155,27 @@ function stripConfidenceValue(value: unknown, previous: unknown): unknown {
 
 export function rewriteAutomaticProvenance(ops: Op[]): Op[] {
   return ops.map((op) => {
-    if (op.op !== "set" || !isRecord(op.value)) return op;
-    return asSetOp(op.path, rewriteProvenance(op.value));
+    if (op.op !== "set") return op;
+    const next = ensureEntityMeta(op.path, op.value);
+    if (!isRecord(next)) return op;
+    return asSetOp(op.path, rewriteProvenance(next));
   });
+}
+
+function ensureEntityMeta(path: string, value: unknown): unknown {
+  const [root, id, rest] = path.split(".");
+  if (rest || !id || !["openings", "walls", "rooms"].includes(root ?? "") || !isRecord(value)) {
+    return value;
+  }
+  if (isRecord(value.meta)) return value;
+  return {
+    ...value,
+    meta: {
+      provenance: GEOMETRY_REPAIR_MODULE,
+      basis: "assumed",
+      confidence: 0.5,
+    },
+  };
 }
 
 function rewriteProvenance(value: Record<string, unknown>): Record<string, unknown> {

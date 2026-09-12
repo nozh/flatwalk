@@ -37,6 +37,7 @@ export const USAGE = `FlatWalk CLI — локальный конвейер бе�
   run        один прогон: import → parse → validate → repair? → build (match/dress явно не готовы)
   import     скопировать материалы и создать model/rev-000.json
   parse      python -m plan_parser, при пустом/ошибке/таймауте 60 с — grok-rects
+             (FLATWALK_SAVED_PARSER_PATCH — сохранённый патч вместо нового vision)
   validate   публичный @flatwalk/validator
   repair     runGeometryRepair (не proposeRepair); сохраняет снимки Resolver
   match      Photo Matcher — не подключён к 54541 (синтетическая фикстура IDs)

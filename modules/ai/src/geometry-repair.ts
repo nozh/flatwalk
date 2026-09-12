@@ -3,6 +3,7 @@ import { apply, type ApplyResult } from "@flatwalk/resolver";
 import { validate, type AvatarProfile } from "@flatwalk/validator";
 import { AdapterError } from "./errors.js";
 import { createGrokClient, type GrokChatRequest, type GrokChatResult } from "./grok.js";
+import { connectivityForRepair, fictitiousInteriorDoor } from "./geometry-repair-connectivity.js";
 import { geometryRepairPrompt } from "./geometry-repair-prompt.js";
 import {
   GEOMETRY_REPAIR_FIXTURE_ID,
@@ -14,6 +15,14 @@ import {
   rewriteAutomaticProvenance,
   stripRaisedConfidence,
 } from "./geometry-repair-schema.js";
+
+/** Call-level only. Does not change DEFAULT_GROK_TIMEOUT_MS used by Matcher. */
+export const GEOMETRY_REPAIR_TIMEOUT_MS = 180_000;
+export const GEOMETRY_REPAIR_CHAT_EXTRA = {
+  reasoning_effort: "low",
+  max_completion_tokens: 4096,
+  response_format: { type: "json_object" },
+} as const;
 
 export {
   GEOMETRY_REPAIR_FIXTURE_ID,
@@ -81,13 +90,48 @@ export type GeometryRepairOutput = {
   diagnostics: GeometryRepairDiagnostics;
 };
 
+export type GeometryRepairPlan = {
+  imageUrl?: string;
+  imageBase64?: string;
+};
+
 export type GeometryRepairInput = {
   model: FlatModel;
   report?: ValidationReport;
   grok?: GeometryRepairClient;
   fixtureId?: string;
   avatar?: AvatarProfile;
+  plan?: GeometryRepairPlan;
 };
+
+function planImageUrl(plan?: GeometryRepairPlan): string | undefined {
+  if (plan?.imageUrl && (plan.imageUrl.startsWith("data:") || plan.imageUrl.startsWith("http"))) {
+    return plan.imageUrl;
+  }
+  if (plan?.imageBase64) {
+    return plan.imageBase64.startsWith("data:")
+      ? plan.imageBase64
+      : `data:image/png;base64,${plan.imageBase64}`;
+  }
+  return undefined;
+}
+
+function repairMessages(
+  prompt: { system: string; user: string },
+  plan?: GeometryRepairPlan,
+): GrokChatRequest["messages"] {
+  const imageUrl = planImageUrl(plan);
+  const userContent = imageUrl
+    ? [
+        { type: "image_url", image_url: { url: imageUrl, detail: "high" } },
+        { type: "text", text: prompt.user },
+      ]
+    : prompt.user;
+  return [
+    { role: "system", content: prompt.system },
+    { role: "user", content: userContent },
+  ];
+}
 
 function failingGeometry(report: ValidationReport) {
   return report.checks.filter((check) => check.status === "fail" && GEOM_LAYERS.has(check.layer));
@@ -207,16 +251,22 @@ export async function runGeometryRepair(input: GeometryRepairInput): Promise<Geo
         entities: check.entities,
       })),
       geometry: compactGeometry(current),
+      connectivity: (() => {
+        try {
+          return connectivityForRepair(current, report);
+        } catch (error) {
+          return { error: error instanceof Error ? error.message : String(error) };
+        }
+      })(),
     });
 
     let chat: GrokChatResult;
     try {
       chat = await grok.chatCompletions({
         fixtureId,
-        messages: [
-          { role: "system", content: prompt.system },
-          { role: "user", content: prompt.user },
-        ],
+        timeoutMs: GEOMETRY_REPAIR_TIMEOUT_MS,
+        extra: { ...GEOMETRY_REPAIR_CHAT_EXTRA },
+        messages: repairMessages(prompt, input.plan),
       });
     } catch (error) {
       const code = error instanceof AdapterError ? error.code : "adapter-error";
@@ -331,6 +381,34 @@ export async function runGeometryRepair(input: GeometryRepairInput): Promise<Geo
       touchedOwners: applied.touchedOwners,
     };
     if (applied.model.revision !== current.revision) {
+      try {
+        const fake = fictitiousInteriorDoor(current, applied.model);
+        if (fake) {
+          step.reason = `fictitious-door: ${fake} is not on a shared interior wall ≥ 0.8 m`;
+          attempts.push(step);
+          if (attempt === GEOMETRY_REPAIR_MAX_ATTEMPTS) {
+            return done(current, lastAcceptedPatch, "invalid-patch", attempts, {
+              fixtureId,
+              synthetic,
+              liveApiCalled,
+              note: adapterNote,
+            });
+          }
+          continue;
+        }
+      } catch (error) {
+        step.reason = error instanceof Error ? error.message : "fictitious-door-check-failed";
+        attempts.push(step);
+        if (attempt === GEOMETRY_REPAIR_MAX_ATTEMPTS) {
+          return done(current, lastAcceptedPatch, "invalid-patch", attempts, {
+            fixtureId,
+            synthetic,
+            liveApiCalled,
+            note: adapterNote,
+          });
+        }
+        continue;
+      }
       step.model = applied.model;
     }
 

@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { createGrokClient } from "@flatwalk/ai";
 import {
@@ -66,6 +66,7 @@ export async function persistGeometryRepair(
       revision: step.apply?.revision ?? step.model?.revision,
       rejected: step.apply?.rejected ?? [],
       reason: step.reason,
+      grokText: step.grokText,
     })),
   }, null, 2)}\n`);
 
@@ -74,7 +75,7 @@ export async function persistGeometryRepair(
   let published = 0;
 
   for (const step of result.attempts) {
-    if (!step.patch || !step.apply || step.apply.revision === step.baseRevision) {
+    if (!step.patch || !step.model || !step.apply || step.apply.revision === step.baseRevision) {
       continue;
     }
     requirePersistFields(step);
@@ -149,7 +150,16 @@ export async function runLimitedRepair(
           : undefined,
     });
   console.log("repair: runGeometryRepair from @flatwalk/ai/geometry-repair (proposeRepair is not called)");
-  const result = await runGeometryRepair({ model, grok: client });
+  let plan: { imageBase64: string } | undefined;
+  const planFile = path.join(paths.materials, "plan.png");
+  try {
+    const bytes = await readFile(planFile);
+    plan = { imageBase64: `data:image/png;base64,${bytes.toString("base64")}` };
+    console.log(`repair: attaching ${planFile} to runGeometryRepair (call-level vision, not a grok-rects rerun)`);
+  } catch {
+    console.log("repair: no materials/plan.png; runGeometryRepair proceeds from Validator diagnosis only");
+  }
+  const result = await runGeometryRepair({ model, grok: client, plan });
   console.log(`repair: stopped=${result.stopped} attempts=${result.attempts.length}`);
   if (result.diagnostics.synthetic === true) {
     console.log("repair: synthetic geometry-repair fixture, not a live x.ai result");

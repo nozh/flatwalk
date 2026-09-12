@@ -1,4 +1,4 @@
-import { readdir, writeFile } from "node:fs/promises";
+import { readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { AdapterError, createGrokClient } from "@flatwalk/ai";
 import { GROK_RECTS_FALLBACK_WHEN, GROK_RECTS_FIXTURE_ID, runGrokRects } from "@flatwalk/ai/grok-rects";
@@ -14,6 +14,7 @@ import { repoRoot, runPaths } from "./paths.ts";
 import { resolveExistingPath } from "./resolve-path.ts";
 import { writeAcceptedOverlay } from "./overlay.ts";
 import { parserOutcomeLabel, parserTimeoutMs, runHttpParser, runPythonParser } from "./python-parser.ts";
+import { bindPatchToModel } from "./saved-patch.ts";
 
 function pad(n: number): string {
   return String(n).padStart(3, "0");
@@ -144,6 +145,35 @@ export async function runParse(runDir: string, adapters: AdapterMode, options: P
   } else {
     patch = asPatch(python.result.patch, "python");
     source = "plan-parser";
+  }
+
+  if (!patch) {
+    const savedPath = (env.FLATWALK_SAVED_PARSER_PATCH ?? "").trim();
+    if (savedPath) {
+      console.log(`parse: Python empty/error/timeout → saved grok-rects patch (${fallbackReason})`);
+      diagnostics.fallback = fallbackReason;
+      const resolved = await resolveExistingPath(savedPath);
+      if (!resolved) {
+        diagnostics.keptRevision = model.revision;
+        await writeDiagnostics(paths.parser, diagnostics);
+        throw new CliError(EXIT.io, `Saved parser patch not found: ${savedPath}`);
+      }
+      const raw = JSON.parse(await readFile(resolved, "utf8")) as unknown;
+      const bound = bindPatchToModel(asPatch(raw, "saved-parser-patch"), model);
+      patch = bound.patch;
+      source = "grok-rects";
+      diagnostics.savedPatch = {
+        file: resolved,
+        sourceModelId: bound.remappedFrom,
+        modelId: patch.modelId,
+        baseRevision: patch.baseRevision,
+        liveApiCalled: false,
+        synthetic: false,
+      };
+      console.log(
+        `parse: saved grok-rects patch ${bound.remappedFrom} → ${model.id} rev ${model.revision}; no vision call`,
+      );
+    }
   }
 
   if (!patch) {

@@ -363,4 +363,177 @@ describe("runGeometryRepair", () => {
     expect(result.diagnostics.note).toMatch(/XAI_API_KEY/);
     expect(result.model).toBe(model);
   });
+
+  it("sends shared-wall diagnosis, call-level live params, and the plan image without inventing a hall door", async () => {
+    const model = hallWcKit();
+    expect(validate(model).walkReady).toBe(false);
+    expect(failIds(model)).toContain("navigation.reachable.kit");
+
+    let request: Parameters<GeometryRepairClient["chatCompletions"]>[0] | undefined;
+    const grok: GeometryRepairClient = {
+      mode: "live",
+      chatCompletions: async (next) => {
+        request = next;
+        return {
+          synthetic: false,
+          body: {
+            choices: [
+              {
+                message: {
+                  role: "assistant",
+                  content: JSON.stringify({
+                    refuse: null,
+                    ops: [
+                      {
+                        op: "set",
+                        path: "openings.kit_door",
+                        value: { wall: "w36", kind: "door", at: 1, width: 0.9, meta: { ...META } },
+                      },
+                    ],
+                  }),
+                },
+                finish_reason: "stop",
+              },
+            ],
+          },
+        };
+      },
+    };
+
+    const result = await runGeometryRepair({
+      model,
+      grok,
+      plan: { imageBase64: "data:image/png;base64,AAAA" },
+    });
+
+    expect(request?.timeoutMs).toBe(180_000);
+    expect(request?.extra).toMatchObject({
+      reasoning_effort: "low",
+      response_format: { type: "json_object" },
+    });
+    expect(Array.isArray(request?.messages[1]?.content)).toBe(true);
+    const parts = request?.messages[1]?.content as Array<{ type: string; text?: string; image_url?: { url: string } }>;
+    expect(parts.some((part) => part.type === "image_url" && part.image_url?.url.startsWith("data:image/png"))).toBe(true);
+    const text = parts.find((part) => part.type === "text")?.text ?? "";
+    expect(text).toMatch(/kit/);
+    expect(text).toMatch(/w36/);
+    expect(request?.messages[0]?.content).toMatch(/shared wall/i);
+    expect(request?.messages[0]?.content).toMatch(/Do not create a passable door/i);
+
+    expect(result.stopped).toBe("repaired");
+    expect(result.model.revision).toBe(2);
+    expect(result.model.openings.kit_door?.wall).toBe("w36");
+    expect(validate(result.model).walkReady).toBe(true);
+  });
+
+  it("fills missing opening meta so a shared-wall door from Grok can pass Contract", async () => {
+    const model = hallWcKit();
+    const grok = grokQueue([
+      JSON.stringify({
+        refuse: null,
+        ops: [{ op: "set", path: "openings.kit_door", value: { wall: "w36", kind: "door", at: 1, width: 0.9 } }],
+      }),
+    ]);
+    const result = await runGeometryRepair({ model, grok });
+    expect(result.stopped).toBe("repaired");
+    expect(result.model.openings.kit_door?.meta.provenance).toBe(GEOMETRY_REPAIR_MODULE);
+    expect(result.model.openings.kit_door?.meta.basis).toBe("assumed");
+    expect(validate(result.model).walkReady).toBe(true);
+  });
+
+  it("does not keep a passable door on a wall that is not a shared interior edge", async () => {
+    const model = hallWcKit();
+    const grok = grokQueue([
+      JSON.stringify({
+        refuse: null,
+        ops: [
+          {
+            op: "set",
+            path: "openings.fake_hall",
+            value: { wall: "w45", kind: "door", at: 1, width: 0.9, meta: { ...META } },
+          },
+        ],
+      }),
+      JSON.stringify({
+        refuse: null,
+        ops: [
+          {
+            op: "set",
+            path: "openings.fake_hall",
+            value: { wall: "w45", kind: "door", at: 1, width: 0.9, meta: { ...META } },
+          },
+        ],
+      }),
+    ]);
+    const result = await runGeometryRepair({ model, grok });
+    expect(result.model).toBe(model);
+    expect(result.model.openings.fake_hall).toBeUndefined();
+    expect(result.stopped).toBe("invalid-patch");
+    expect(result.attempts.every((step) => step.reason?.includes("fictitious-door"))).toBe(true);
+  });
 });
+
+function hallWcKit(): FlatModel {
+  return {
+    schemaVersion: "0.1",
+    id: "hall-wc-kit",
+    revision: 1,
+    source: { site: "manual", fetchedAt: "2026-09-12T10:00:00Z" },
+    flat: {
+      meta: { provenance: "importer@0.1", basis: "declared" },
+      defaults: {
+        wallHeight: 2.8,
+        doorHeight: 2.1,
+        windowSill: 0.9,
+        windowHeight: 1.5,
+        meta: {
+          wallHeight: { ...META },
+          doorHeight: { ...META },
+          windowSill: { ...META },
+          windowHeight: { ...META },
+        },
+      },
+    },
+    plan: { asset: null, meta: { ...META } },
+    vertices: {
+      v1: [0, 0],
+      v2: [4, 0],
+      v3: [7, 0],
+      v4: [10, 0],
+      v5: [10, 3],
+      v6: [7, 3],
+      v7: [4, 3],
+      v8: [0, 3],
+    },
+    walls: {
+      w12: { a: "v1", b: "v2", thickness: 0.2, exterior: true, meta: { ...META } },
+      w23: { a: "v2", b: "v3", thickness: 0.2, exterior: true, meta: { ...META } },
+      w34: { a: "v3", b: "v4", thickness: 0.2, exterior: true, meta: { ...META } },
+      w45: { a: "v4", b: "v5", thickness: 0.2, exterior: true, meta: { ...META } },
+      w56: { a: "v5", b: "v6", thickness: 0.2, exterior: true, meta: { ...META } },
+      w67: { a: "v6", b: "v7", thickness: 0.2, exterior: true, meta: { ...META } },
+      w78: { a: "v7", b: "v8", thickness: 0.2, exterior: true, meta: { ...META } },
+      w81: { a: "v8", b: "v1", thickness: 0.2, exterior: true, meta: { ...META } },
+      w27: { a: "v2", b: "v7", thickness: 0.2, exterior: false, meta: { ...META } },
+      w36: { a: "v3", b: "v6", thickness: 0.2, exterior: false, meta: { ...META } },
+    },
+    openings: {
+      d_hall_wc: { wall: "w27", kind: "door", at: 1, width: 0.9, meta: { ...META } },
+      enter: { wall: "w81", kind: "door", at: 1, width: 1, entrance: true, meta: { ...META } },
+    },
+    rooms: {
+      hall: { anchor: [2, 1.5], type: "hall", label: "hall", meta: { ...META } },
+      wc: { anchor: [5.5, 1.5], type: "wc", label: "wc", meta: { ...META } },
+      kit: {
+        anchor: [8.5, 1.5],
+        type: "kitchen",
+        label: "kit",
+        meta: {
+          ...META,
+          question: "Door kit–hall dropped: rooms have no shared wall ≥ 0.8 m; no fictitious passage was created.",
+        },
+      },
+    },
+    assets: {},
+  } as FlatModel;
+}

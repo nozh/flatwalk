@@ -1,6 +1,6 @@
 import { PatchSchema, type FlatModel, type Op, type Patch } from "@flatwalk/contract";
 import { GeometryError, adjacency, faces, roomPolygon } from "@flatwalk/geometry";
-import { createGrokClient, type GrokChatRequest, type GrokChatResult } from "./grok.js";
+import { createGrokClient, DEFAULT_GROK_MODEL, type GrokChatRequest, type GrokChatResult } from "./grok.js";
 import { grokRectsPrompt } from "./grok-rects-prompt.js";
 import {
   assumedPlanMeta,
@@ -13,6 +13,7 @@ import {
   GROK_RECTS_CONFIDENCE,
   GROK_RECTS_FIXTURE_ID,
   GROK_RECTS_MODULE,
+  GROK_RECTS_PROMPT_VERSION,
   parseGrokRectsJson,
 } from "./grok-rects-schema.js";
 
@@ -20,6 +21,7 @@ export {
   GROK_RECTS_CONFIDENCE,
   GROK_RECTS_FIXTURE_ID,
   GROK_RECTS_MODULE,
+  GROK_RECTS_PROMPT_VERSION,
   GRID_METERS,
   MIN_SHARED_EDGE_M,
   SNAP_METERS,
@@ -61,8 +63,13 @@ export type GrokRectsGeometryError = {
 
 export type GrokRectsDiagnostics = {
   strategy: "grok-rects";
+  promptVersion: typeof GROK_RECTS_PROMPT_VERSION;
+  providerModel?: string;
+  imageAttached: boolean;
+  geometrySuitable: boolean;
   synthetic?: boolean;
   liveApiCalled: boolean;
+  httpStatus?: number;
   note?: string;
   schemaErrors?: string[];
   intersectingRooms?: [string, string][];
@@ -105,6 +112,9 @@ const OVERLAY: GrokRectsOverlayStatus = {
 function baseDiagnostics(partial: Partial<GrokRectsDiagnostics> = {}): GrokRectsDiagnostics {
   return {
     strategy: "grok-rects",
+    promptVersion: GROK_RECTS_PROMPT_VERSION,
+    imageAttached: false,
+    geometrySuitable: false,
     liveApiCalled: false,
     snap: {
       owner: "modules/ai grok-rects",
@@ -268,6 +278,7 @@ export function grokRectsGraphToPatch(model: FlatModel, result: ReturnType<typeo
     patch: parsed.data,
     diagnostics: baseDiagnostics({
       droppedDoors: graph.droppedDoors,
+      geometrySuitable: true,
       note: `Schematic geometry; confidence ${GROK_RECTS_CONFIDENCE}; plan.meta.basis=assumed. Caller must apply() via Resolver.`,
     }),
   };
@@ -290,10 +301,14 @@ export async function runGrokRects(input: GrokRectsInput): Promise<GrokRectsOutp
   }
   const grok = input.grok ?? createGrokClient();
   const fixtureId = input.fixtureId ?? GROK_RECTS_FIXTURE_ID;
+  const imageAttached = Boolean(planImageUrl(input.plan));
   const chat = await grok.chatCompletions({
     fixtureId,
+    model: DEFAULT_GROK_MODEL,
     messages: visionMessages(input.plan),
   });
+  const providerModel = typeof chat.body.model === "string" ? chat.body.model : undefined;
+  const liveApiCalled = grok.mode === "live" && chat.synthetic !== true;
   const content = chat.body.choices[0]?.message.content;
   if (typeof content !== "string" || !content.trim()) {
     return {
@@ -301,16 +316,23 @@ export async function runGrokRects(input: GrokRectsInput): Promise<GrokRectsOutp
       reason: "invalid-rects-json",
       diagnostics: baseDiagnostics({
         synthetic: chat.synthetic,
-        liveApiCalled: grok.mode === "live" && chat.synthetic !== true,
+        liveApiCalled,
+        providerModel,
+        imageAttached,
         note: chat.note,
         schemaErrors: ["Grok completion has no text content"],
+        ...(liveApiCalled ? { httpStatus: 200 } : {}),
       }),
     };
   }
   const parsed = parseGrokRectsJson(content);
   const output = grokRectsGraphToPatch(input.model, parsed);
   output.diagnostics.synthetic = chat.synthetic;
-  output.diagnostics.liveApiCalled = grok.mode === "live" && chat.synthetic !== true;
+  output.diagnostics.liveApiCalled = liveApiCalled;
+  output.diagnostics.providerModel = providerModel;
+  output.diagnostics.imageAttached = imageAttached;
+  output.diagnostics.promptVersion = GROK_RECTS_PROMPT_VERSION;
+  if (liveApiCalled) output.diagnostics.httpStatus = 200;
   output.diagnostics.note = [chat.note, output.diagnostics.note].filter(Boolean).join(" ");
   if (!parsed.ok && parsed.errors[0]?.includes("not valid JSON")) {
     output.reason = "invalid-rects-json";

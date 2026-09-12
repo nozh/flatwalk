@@ -24,6 +24,7 @@ export {
   GROK_RECTS_FALLBACK_WHEN,
   GROK_RECTS_FIXTURE_ID,
   GROK_RECTS_MODULE,
+  GROK_RECTS_PROMPT_VERSION,
   grokRectsPrompt,
   grokRectsResultSchema,
   parseGrokRectsResult,

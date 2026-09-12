@@ -1,4 +1,5 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -6,13 +7,15 @@ import { build } from "@flatwalk/builder";
 import { PatchSchema, validateFlatModel, type FlatModel } from "@flatwalk/contract";
 import { adjacency, areas, faces, roomPolygon, startPoint } from "@flatwalk/geometry";
 import { apply } from "@flatwalk/resolver";
+import { validate } from "@flatwalk/validator";
 import { AdapterError } from "./errors.js";
-import { createGrokClient } from "./grok.js";
+import { createGrokClient, DEFAULT_GROK_MODEL, XAI_CHAT_COMPLETIONS_URL } from "./grok.js";
 import {
   GROK_RECTS_CONFIDENCE,
   GROK_RECTS_FALLBACK_WHEN,
   GROK_RECTS_FIXTURE_ID,
   GROK_RECTS_MODULE,
+  GROK_RECTS_PROMPT_VERSION,
   grokRectsPrompt,
   grokRectsResultSchema,
   parseGrokRectsResult,
@@ -136,6 +139,9 @@ describe("runGrokRects", () => {
     expect(result.patch?.schemaVersion).toBe("0.1");
     expect(PatchSchema.safeParse(result.patch).success).toBe(true);
     expect(result.diagnostics.synthetic).toBe(true);
+    expect(result.diagnostics.liveApiCalled).toBe(false);
+    expect(result.diagnostics.geometrySuitable).toBe(true);
+    expect(result.diagnostics.promptVersion).toBe(GROK_RECTS_PROMPT_VERSION);
     expect(result.diagnostics.overlay.status).toBe("blocked");
     expect(result.diagnostics.overlay.dependency).toBe("builder.renderOverlay");
 
@@ -328,5 +334,124 @@ describe("runGrokRects", () => {
       ]),
     );
     expect(GROK_RECTS_FIXTURE_ID).toBe("grok/grok-rects.synthetic");
+  });
+
+  it("puts the source 54541 PNG on the existing Grok adapter request and does not seed the etalon model", async () => {
+    const planPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../fixtures/54541/plan.png");
+    const planBytes = await readFile(planPath);
+    const planBase64 = planBytes.toString("base64");
+    const captured: { url?: string; body?: string }[] = [];
+    const grok = createGrokClient({
+      mode: "live",
+      apiKey: "test-xai-key-not-a-secret",
+      transport: async (request) => {
+        captured.push({ url: request.url, body: request.body });
+        return {
+          status: 200,
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            id: "chatcmpl-transport-stub",
+            object: "chat.completion",
+            model: DEFAULT_GROK_MODEL,
+            choices: [
+              {
+                index: 0,
+                message: { role: "assistant", content: JSON.stringify(THREE_ROOMS) },
+                finish_reason: "stop",
+              },
+            ],
+          }),
+        };
+      },
+    });
+
+    const model = emptyModel("cityexpert-54541-empty");
+    const result = await runGrokRects({
+      model,
+      plan: { imageBase64: planBase64 },
+      grok,
+    });
+
+    expect(captured).toHaveLength(1);
+    expect(captured[0]?.url).toBe(XAI_CHAT_COMPLETIONS_URL);
+    const posted = JSON.parse(captured[0]?.body ?? "{}") as {
+      model: string;
+      messages: Array<{ content: unknown }>;
+    };
+    expect(posted.model).toBe(DEFAULT_GROK_MODEL);
+    const blob = JSON.stringify(posted.messages);
+    expect(blob).toContain("data:image/png;base64,");
+    expect(blob).toContain(planBase64.slice(0, 80));
+    expect(blob).not.toContain("test-xai-key-not-a-secret");
+    expect(result.diagnostics.liveApiCalled).toBe(true);
+    expect(result.diagnostics.httpStatus).toBe(200);
+    expect(result.diagnostics.imageAttached).toBe(true);
+    expect(result.diagnostics.providerModel).toBe(DEFAULT_GROK_MODEL);
+    expect(result.diagnostics.promptVersion).toBe(GROK_RECTS_PROMPT_VERSION);
+    expect(result.diagnostics.synthetic).toBe(false);
+    expect(result.diagnostics.geometrySuitable).toBe(true);
+    expect(result.patch).not.toBeNull();
+
+    const applied = apply(model, result.patch!, currentSince(model));
+    expect(applied.rejected).toEqual([]);
+    expect(validateFlatModel(applied.model).success).toBe(true);
+    expect(faces(applied.model)).toHaveLength(3);
+    const report = validate(applied.model);
+    expect(report.modelId).toBe(applied.model.id);
+    expect(report.revision).toBe(applied.model.revision);
+    expect(model.rooms).toEqual({});
+  });
+
+  it("treats HTTP 200 with unusable rects as a diagnostic refusal, not as seeded 54541 geometry", async () => {
+    const grok = createGrokClient({
+      mode: "live",
+      apiKey: "test-xai-key-not-a-secret",
+      transport: async () => ({
+        status: 200,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          model: DEFAULT_GROK_MODEL,
+          choices: [
+            {
+              message: {
+                role: "assistant",
+                content: JSON.stringify({
+                  rooms: [
+                    { id: "r1", type: "living", rect: [0, 0, 8, 8] },
+                    { id: "r2", type: "bedroom", rect: [12, 12, 8, 8] },
+                  ],
+                  doors: [{ between: ["r1", "r2"] }],
+                  entrance: "r1",
+                }),
+              },
+              finish_reason: "stop",
+            },
+          ],
+        }),
+      }),
+    });
+    const result = await runGrokRects({
+      model: emptyModel("cityexpert-54541-empty"),
+      plan: { imageUrl: "https://example.test/54541/plan.png" },
+      grok,
+    });
+    expect(result.diagnostics.liveApiCalled).toBe(true);
+    expect(result.diagnostics.httpStatus).toBe(200);
+    expect(result.diagnostics.geometrySuitable).toBe(false);
+    expect(result.patch).toBeNull();
+    expect(result.reason).toBe("incompatible-geometry");
+    expect(result.diagnostics.geometryError?.code).toBe("ambiguous-mapping");
+  });
+
+  it("does not invent a live 54541 vision result when XAI_API_KEY is missing", async () => {
+    await expect(
+      runGrokRects({
+        model: emptyModel(),
+        plan: { imageUrl: "https://example.test/54541/plan.png" },
+        grok: createGrokClient({ mode: "live", env: {}, transport: async () => {
+          throw new Error("must not call transport without a key");
+        } }),
+      }),
+    ).rejects.toMatchObject({ code: "missing-config" });
   });
 });

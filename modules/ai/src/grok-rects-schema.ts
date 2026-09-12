@@ -1,6 +1,7 @@
 export const GROK_RECTS_MODULE = "plan-parser/grok-rects@0.1";
 export const GROK_RECTS_CONFIDENCE = 0.5;
 export const GROK_RECTS_FIXTURE_ID = "grok/grok-rects.synthetic";
+export const GROK_RECTS_PROMPT_VERSION = "plan-parser/grok-rects-prompt@0.1";
 export const GRID_METERS = 0.5;
 export const SNAP_METERS = 0.05;
 export const MIN_SHARED_EDGE_M = 0.8;

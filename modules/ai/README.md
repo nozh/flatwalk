@@ -85,7 +85,21 @@ if (patch) {
 
 Включать fallback, когда выполняется любое из `GROK_RECTS_FALLBACK_WHEN`: пустой `patch` OpenCV, таймаут 60 с, ошибки слоя «Геометрия» после ремонта, нет `PARSER_URL`. Маршрутизацию Orchestrator этот пакет не меняет.
 
-Режим `fixture` читает `fixtures/grok/grok-rects.synthetic.json`. Нет файла — `missing-fixture`, сеть не вызывается. Живой x.ai в этой задаче не вызывался.
+Режим `fixture` читает `fixtures/grok/grok-rects.synthetic.json`. Нет файла — `missing-fixture`, сеть не вызывается.
+
+Промпт: `plan-parser/grok-rects-prompt@0.1`. Модель провайдера по умолчанию `grok-4.6`. Diagnostics отличает `liveApiCalled` / `httpStatus` от `geometrySuitable`.
+
+Проверка передачи исходного плана 54541 (пустая rev 0, без `flat.model.json`):
+
+```text
+# fixture — сеть не вызывается; synthetic JSON не является распознаванием 54541
+node --import tsx modules/ai/scripts/probe-grok-rects-54541.ts
+
+# live только явно; без XAI_API_KEY это missing-config, не fixture
+FLATWALK_ADAPTERS=live node --import tsx modules/ai/scripts/probe-grok-rects-54541.ts
+```
+
+Orchestrator/`tools/cli` этот срез не меняет.
 
 ## photo-matcher (задача 3.2)
 
@@ -127,4 +141,5 @@ const result = await runGeometryRepair({
 Вход: принятая модель + диагностика. Выход: кандидат `Patch` (`module: geometry-repair/grok@0.1`) либо отказ. Каждый кандидат идёт в Resolver, затем `validate` принятой ревизии. Максимум две попытки. Стоп: нет геометрических fail, `refuse`, невалидный патч, нет прогресса, тот же набор fail, отказ Resolver, исчерпание попыток. Human не затирается, confidence не повышается. CLI и Viewer не вызывают этот API в этом срезе.
 
 Fixture: `fixtures/grok/geometry-repair.fixable.1.json` (`fixtureId` + `.${attempt}`). Нет файла — `missing-fixture`. Живой x.ai в этой задаче не вызывался.
+
 

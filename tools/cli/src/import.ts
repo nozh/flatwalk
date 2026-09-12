@@ -1,5 +1,6 @@
-import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import type { FlatModel } from "@flatwalk/contract";
 import { bundleToModel, fetchListing, type ListingBundle } from "@flatwalk/firecrawl";
 import { refuseSilentLive, requireLiveMode, type AdapterMode } from "./adapters.ts";
 import type { ParsedArgs } from "./args.ts";
@@ -10,6 +11,37 @@ import { defaultFixtureDir, defaultSeedModel, resolveExistingPath } from "./reso
 
 function runRelative(runRoot: string, absoluteFile: string): string {
   return path.relative(runRoot, absoluteFile).split(path.sep).join("/");
+}
+
+/** Viewer static `resolveAssetUrl` prefixes `/` onto this path from the run folder root. */
+export function runFolderMaterialUrl(url: string): string {
+  if (/^(https?:|data:|blob:)/i.test(url) || url.startsWith("/") || url.startsWith("storage://")) {
+    return url;
+  }
+  const cleaned = url.replace(/^\.\//, "");
+  return cleaned === "materials" || cleaned.startsWith("materials/") ? cleaned : `materials/${cleaned}`;
+}
+
+async function relocateModelAssetUrls(runRoot: string, model: FlatModel): Promise<FlatModel> {
+  const assets: FlatModel["assets"] = { ...model.assets };
+  for (const [id, asset] of Object.entries(assets)) {
+    const url = runFolderMaterialUrl(asset.url);
+    if (/^(https?:|data:|blob:)/i.test(url) || url.startsWith("storage://")) {
+      assets[id] = { ...asset, url };
+      continue;
+    }
+    const file = path.resolve(runRoot, url);
+    try {
+      await access(file);
+    } catch {
+      throw new CliError(
+        EXIT.io,
+        `Asset ${id} URL ${url} does not resolve to a copied file under the run folder (looked for ${file}).`,
+      );
+    }
+    assets[id] = { ...asset, url };
+  }
+  return { ...model, assets };
 }
 
 async function copyFileToMaterials(
@@ -150,7 +182,7 @@ export async function runImport(args: ParsedArgs, adapters: AdapterMode): Promis
 
   if (args.seed) {
     const seedFile = await resolveSeedFile(args);
-    const model = await loadModelFile(seedFile);
+    const model = await relocateModelAssetUrls(paths.root, await loadModelFile(seedFile));
     const written = await writeModelFiles(paths.root, model);
     console.log(
       `import: seeded ${model.id} rev ${model.revision} → ${written.revision} (manual fixture, not recognition)`,
@@ -158,9 +190,12 @@ export async function runImport(args: ParsedArgs, adapters: AdapterMode): Promis
     return;
   }
 
-  const model = await bundleToModel(bundle, {
-    assetUrl: (asset) => runRelative(paths.root, asset.localPath),
-  });
+  const model = await relocateModelAssetUrls(
+    paths.root,
+    await bundleToModel(bundle, {
+      assetUrl: (asset) => runFolderMaterialUrl(runRelative(paths.root, asset.localPath)),
+    }),
+  );
   const written = await writeModelFiles(paths.root, model);
   console.log(`import: bundleToModel rev ${model.revision} → ${written.revision} (empty geometry; parse is separate)`);
 }

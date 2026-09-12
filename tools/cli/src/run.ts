@@ -30,8 +30,8 @@ export async function runPipeline(args: ParsedArgs, adapters: AdapterMode): Prom
   stage("validate");
   let report = await runValidate(args.runDir);
 
-  stage("repair", "limited, only if proposeRepair exists");
-  const repair = await runLimitedRepair(args.runDir);
+  stage("repair", "runGeometryRepair; proposeRepair is not called");
+  const repair = await runLimitedRepair(args.runDir, adapters);
   if (repair === "applied") report = await runValidate(args.runDir);
 
   stage("match");

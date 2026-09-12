@@ -110,6 +110,11 @@ export const geometryRepairResultSchema = {
   },
 } as const;
 
+function asSetOp(path: string, value: unknown): Op {
+  // Avoid Extract<Op,{op:"set"}>["value"] — z.json() is recursive and blows consumer tsc.
+  return { op: "set", path, value } as Op;
+}
+
 export function stripRaisedConfidence(ops: Op[], model: FlatModel): Op[] {
   const next: Op[] = [];
   for (const op of ops) {
@@ -118,11 +123,7 @@ export function stripRaisedConfidence(ops: Op[], model: FlatModel): Op[] {
       next.push(op);
       continue;
     }
-    next.push({
-      op: "set",
-      path: op.path,
-      value: stripConfidenceValue(op.value, currentAt(model, op.path)) as Extract<Op, { op: "set" }>["value"],
-    });
+    next.push(asSetOp(op.path, stripConfidenceValue(op.value, currentAt(model, op.path))));
   }
   return next;
 }
@@ -155,11 +156,7 @@ function stripConfidenceValue(value: unknown, previous: unknown): unknown {
 export function rewriteAutomaticProvenance(ops: Op[]): Op[] {
   return ops.map((op) => {
     if (op.op !== "set" || !isRecord(op.value)) return op;
-    return {
-      op: "set" as const,
-      path: op.path,
-      value: rewriteProvenance(op.value) as Extract<Op, { op: "set" }>["value"],
-    };
+    return asSetOp(op.path, rewriteProvenance(op.value));
   });
 }
 

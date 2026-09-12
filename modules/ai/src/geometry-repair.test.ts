@@ -229,6 +229,47 @@ describe("runGeometryRepair", () => {
     expect(result.attempts[1]?.baseRevision).toBe(2);
     expect(result.attempts[0]?.report.revision).toBe(1);
     expect(result.attempts[1]?.report.revision).toBe(2);
+    expect(result.attempts[0]?.model?.revision).toBe(2);
+    expect(result.attempts[1]?.model?.revision).toBe(3);
+    expect(result.attempts[0]?.apply?.touchedPaths.length).toBeGreaterThan(0);
+    expect(result.attempts[1]?.apply?.touchedPaths.length).toBeGreaterThan(0);
+    expect(result.attempts[0]?.apply?.touchedOwners).toEqual(expect.arrayContaining(["openings.d1"]));
+    expect(result.attempts[1]?.apply?.touchedOwners).toEqual(expect.arrayContaining(["openings.enter"]));
+    expect(result.patch?.baseRevision).toBe(2);
+    expect(result.patch?.ops).toEqual([{ op: "set", path: "openings.enter.entrance", value: true }]);
+  });
+
+  it("keeps a new revision when Resolver rejects only some ops (human)", async () => {
+    const model = twoRooms({
+      openings: {
+        d1: {
+          wall: "w25",
+          kind: "door",
+          at: 1,
+          width: 0.4,
+          meta: { provenance: "human", basis: "declared", confidence: 0.4, reviewed: true },
+        },
+        enter: { wall: "w61", kind: "door", at: 1, width: 1, entrance: true, meta: { ...META } },
+      },
+    });
+    const grok = grokQueue([
+      JSON.stringify({
+        refuse: null,
+        ops: [
+          { op: "set", path: "openings.d1.width", value: 0.9 },
+          { op: "set", path: "rooms.left.label", value: "Living" },
+        ],
+      }),
+    ]);
+    const result = await runGeometryRepair({ model, grok });
+    expect(result.model.revision).toBe(model.revision + 1);
+    expect(result.model.openings.d1?.width).toBe(0.4);
+    expect(result.model.rooms.left?.label).toBe("Living");
+    expect(result.attempts[0]?.apply?.rejected.some((item) => item.reason === "human")).toBe(true);
+    expect(result.attempts[0]?.apply?.applied.length).toBeGreaterThan(0);
+    expect(result.attempts[0]?.model?.revision).toBe(model.revision + 1);
+    expect(result.attempts[0]?.apply?.touchedPaths.length).toBeGreaterThan(0);
+    expect(result.patch?.baseRevision).toBe(model.revision);
   });
 
   it("stops on an explicit Grok refusal without applying ops", async () => {

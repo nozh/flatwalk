@@ -55,7 +55,11 @@ export type GeometryRepairAttempt = {
   grokText?: string;
   patch: Patch | null;
   reason?: string;
-  apply?: Pick<ApplyResult, "applied" | "rejected"> & { revision: number };
+  /** Resolver snapshot for this step. Orchestrator must persist this, not re-apply `result.patch`. */
+  model?: FlatModel;
+  apply?: Pick<ApplyResult, "applied" | "rejected" | "touchedPaths" | "touchedOwners"> & {
+    revision: number;
+  };
   nextReport?: ValidationReport;
 };
 
@@ -323,7 +327,12 @@ export async function runGeometryRepair(input: GeometryRepairInput): Promise<Geo
       applied: applied.applied,
       rejected: applied.rejected,
       revision: applied.model.revision,
+      touchedPaths: applied.touchedPaths,
+      touchedOwners: applied.touchedOwners,
     };
+    if (applied.model.revision !== current.revision) {
+      step.model = applied.model;
+    }
 
     const unchanged = applied.model === current || applied.model.revision === current.revision;
     if (unchanged && applied.applied.length === 0) {

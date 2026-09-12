@@ -28,7 +28,7 @@ export function reportWalkStatus(model: FlatModel, report: ValidationReport): st
   } else {
     lines.push("validate: полная готовность прогулки не объявляется; пробная прогулка и диагностика сохранены");
   }
-  lines.push("validate: цикл ремонта (proposeRepair) пока не подключён; отчёт записан без автопатча");
+  lines.push("validate: proposeRepair отсутствует; этап repair вызывает runGeometryRepair, не этот отчёт");
   return lines.join("\n");
 }
 

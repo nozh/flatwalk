@@ -2,6 +2,7 @@ export const COMMANDS = [
   "import",
   "parse",
   "validate",
+  "repair",
   "match",
   "dress",
   "build",
@@ -36,7 +37,8 @@ export const USAGE = `FlatWalk CLI — локальный конвейер бе�
   run        один прогон: import → parse → validate → repair? → build (match/dress явно не готовы)
   import     скопировать материалы и создать model/rev-000.json
   parse      python -m plan_parser, при пустом/ошибке/таймауте 60 с — grok-rects
-  validate   публичный @flatwalk/validator; цикл ремонта только если есть proposeRepair
+  validate   публичный @flatwalk/validator
+  repair     runGeometryRepair (не proposeRepair); сохраняет снимки Resolver
   match      Photo Matcher — не подключён к 54541 (синтетическая фикстура IDs)
   dress      Dresser — публичный apply API не экспортируется
   build      Builder: build/scene.snapshot.json и build/flat.glb

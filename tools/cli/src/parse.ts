@@ -84,7 +84,7 @@ export async function runParse(runDir: string, adapters: AdapterMode): Promise<v
   const diagnostics: Record<string, unknown> = {
     modelId: model.id,
     baseRevision: model.revision,
-    repairLoop: "not-connected",
+    repairLoop: "later-runGeometryRepair",
     grokRectsFallbackWhen: [...GROK_RECTS_FALLBACK_WHEN],
   };
 
@@ -191,7 +191,7 @@ export async function runParse(runDir: string, adapters: AdapterMode): Promise<v
     rejected: applied.rejected,
     nextRevision: applied.model.revision,
   };
-  diagnostics.repairLoop = "not-connected (proposeRepair is not called)";
+  diagnostics.repairLoop = "later-runGeometryRepair";
 
   if (applied.rejected.length > 0 || applied.model.revision === model.revision) {
     diagnostics.keptRevision = model.revision;
@@ -219,5 +219,5 @@ export async function runParse(runDir: string, adapters: AdapterMode): Promise<v
   await writeDiagnostics(paths.parser, diagnostics);
   console.log(`parse: ${source} patch → ${patchFile}`);
   console.log(`parse: accepted ${applied.model.id} rev ${applied.model.revision} via public Resolver`);
-  console.log("parse: repair loop is not connected (proposeRepair is not called)");
+  console.log("parse: proposeRepair is not called; repair is a later runGeometryRepair stage");
 }

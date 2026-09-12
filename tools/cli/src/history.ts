@@ -67,26 +67,44 @@ export function contextForPatch(
   };
 }
 
+export function appendPublishedChange(
+  journal: RevisionContext | undefined,
+  previous: FlatModel,
+  next: FlatModel,
+  change: { touchedPaths: string[]; touchedOwners: string[] },
+): RevisionContext {
+  if (next.revision !== previous.revision + 1) {
+    throw new CliError(
+      EXIT.model,
+      `Cannot append history from rev ${previous.revision} to ${next.revision}; sequential revisions required`,
+    );
+  }
+  const previousJournal = journal ?? emptyHistory(previous);
+  return {
+    schemaVersion: "0.1",
+    modelId: next.id,
+    baseRevision: 0,
+    currentRevision: next.revision,
+    changes: [
+      ...previousJournal.changes,
+      {
+        revision: next.revision,
+        touchedPaths: change.touchedPaths,
+        touchedOwners: change.touchedOwners,
+      },
+    ],
+  };
+}
+
 export function appendHistory(
   journal: RevisionContext | undefined,
   model: FlatModel,
   applied: ApplyResult,
 ): RevisionContext {
-  const previous = journal ?? emptyHistory(model);
-  return {
-    schemaVersion: "0.1",
-    modelId: applied.model.id,
-    baseRevision: 0,
-    currentRevision: applied.model.revision,
-    changes: [
-      ...previous.changes,
-      {
-        revision: applied.model.revision,
-        touchedPaths: applied.touchedPaths,
-        touchedOwners: applied.touchedOwners,
-      },
-    ],
-  };
+  return appendPublishedChange(journal, model, applied.model, {
+    touchedPaths: applied.touchedPaths,
+    touchedOwners: applied.touchedOwners,
+  });
 }
 
 async function writeJsonAtomic(file: string, value: unknown): Promise<void> {

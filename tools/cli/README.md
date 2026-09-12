@@ -9,7 +9,7 @@ cd tools/cli
 npx tsx src/index.ts run /tmp/flatwalk-54541 --from fixtures/54541
 ```
 
-`--seed` не используется: import даёт rev 0 без геометрии, parse вызывает `python -m plan_parser`, при пустом/ошибке/таймауте 60 с — fixture `grok-rects` (синтетика, не распознавание плана 54541). Repair не вызывается, пока Validator не экспортирует `proposeRepair`. Viewer не стартует из `run`; печатается команда.
+`--seed` не используется: import даёт rev 0 без геометрии, parse вызывает `python -m plan_parser`, при пустом/ошибке/таймауте 60 с — fixture `grok-rects` (синтетика, не распознавание плана 54541). Repair — `runGeometryRepair`, не `proposeRepair`. Viewer не стартует из `run`; печатается команда.
 
 Открыть Viewer:
 

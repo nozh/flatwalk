@@ -6,6 +6,7 @@ import { CliError, EXIT } from "./errors.ts";
 import { runImport } from "./import.ts";
 import { runNotImplemented } from "./not-implemented.ts";
 import { runParse } from "./parse.ts";
+import { runLimitedRepair } from "./repair.ts";
 import { runPipeline } from "./run.ts";
 import { runServe } from "./serve.ts";
 import { runValidate } from "./validate.ts";
@@ -35,7 +36,7 @@ async function main(): Promise<void> {
 
   const adapters = resolveAdapterMode({ flag: args.adapters, env: process.env });
   console.log(`adapters: ${adapters}`);
-  if (args.command === "run" || args.command === "parse" || args.command === "import") {
+  if (args.command === "run" || args.command === "parse" || args.command === "import" || args.command === "repair") {
     printLiveReadiness(adapters, process.env);
   }
 
@@ -51,6 +52,9 @@ async function main(): Promise<void> {
       break;
     case "validate":
       await runValidate(args.runDir);
+      break;
+    case "repair":
+      await runLimitedRepair(args.runDir, adapters);
       break;
     case "match":
       await runNotImplemented(

@@ -95,7 +95,10 @@ if (patch) {
 # fixture — сеть не вызывается; synthetic JSON не является распознаванием 54541
 node --import tsx modules/ai/scripts/probe-grok-rects-54541.ts
 
-# live только явно; без XAI_API_KEY это missing-config, не fixture
+# live диагностика: GET /v1/language-models (не generation) + один крошечный vision-запрос
+FLATWALK_ADAPTERS=live node --import tsx modules/ai/scripts/probe-grok-rects-54541.ts --diagnose
+
+# live исходный план 54541; без XAI_API_KEY это missing-config, не fixture
 FLATWALK_ADAPTERS=live node --import tsx modules/ai/scripts/probe-grok-rects-54541.ts
 ```
 

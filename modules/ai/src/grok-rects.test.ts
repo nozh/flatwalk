@@ -11,11 +11,13 @@ import { validate } from "@flatwalk/validator";
 import { AdapterError } from "./errors.js";
 import { createGrokClient, DEFAULT_GROK_MODEL, XAI_CHAT_COMPLETIONS_URL } from "./grok.js";
 import {
+  GROK_RECTS_CHAT_EXTRA,
   GROK_RECTS_CONFIDENCE,
   GROK_RECTS_FALLBACK_WHEN,
   GROK_RECTS_FIXTURE_ID,
   GROK_RECTS_MODULE,
   GROK_RECTS_PROMPT_VERSION,
+  GROK_RECTS_TIMEOUT_MS,
   grokRectsPrompt,
   grokRectsResultSchema,
   parseGrokRectsResult,
@@ -141,6 +143,8 @@ describe("runGrokRects", () => {
     expect(result.diagnostics.synthetic).toBe(true);
     expect(result.diagnostics.liveApiCalled).toBe(false);
     expect(result.diagnostics.geometrySuitable).toBe(true);
+    expect(result.diagnostics.aiResult?.rooms).toHaveLength(3);
+    expect(result.diagnostics.aiResult?.entrance).toBe("r2");
     expect(result.diagnostics.promptVersion).toBe(GROK_RECTS_PROMPT_VERSION);
     expect(result.diagnostics.overlay.status).toBe("blocked");
     expect(result.diagnostics.overlay.dependency).toBe("builder.renderOverlay");
@@ -377,8 +381,15 @@ describe("runGrokRects", () => {
     const posted = JSON.parse(captured[0]?.body ?? "{}") as {
       model: string;
       messages: Array<{ content: unknown }>;
+      reasoning_effort?: string;
+      max_completion_tokens?: number;
+      response_format?: { type: string };
     };
     expect(posted.model).toBe(DEFAULT_GROK_MODEL);
+    expect(posted.reasoning_effort).toBe(GROK_RECTS_CHAT_EXTRA.reasoning_effort);
+    expect(posted.max_completion_tokens).toBe(GROK_RECTS_CHAT_EXTRA.max_completion_tokens);
+    expect(posted.response_format).toEqual(GROK_RECTS_CHAT_EXTRA.response_format);
+    expect(GROK_RECTS_TIMEOUT_MS).toBe(180_000);
     const blob = JSON.stringify(posted.messages);
     expect(blob).toContain("data:image/png;base64,");
     expect(blob).toContain(planBase64.slice(0, 80));

@@ -5,6 +5,7 @@ export {
   DEFAULT_GROK_MODEL,
   DEFAULT_GROK_TIMEOUT_MS,
   XAI_CHAT_COMPLETIONS_URL,
+  XAI_LANGUAGE_MODELS_URL,
   type GrokChatCompletion,
   type GrokChatRequest,
   type GrokChatResult,
@@ -30,6 +31,8 @@ export {
   parseGrokRectsResult,
   rectsToGraph,
   runGrokRects,
+  GROK_RECTS_TIMEOUT_MS,
+  GROK_RECTS_CHAT_EXTRA,
   type GrokRectsInput,
   type GrokRectsOutput,
 } from "./grok-rects.js";

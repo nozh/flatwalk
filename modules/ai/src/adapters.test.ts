@@ -163,6 +163,41 @@ describe("Grok adapter", () => {
     expect(calls[0]?.headers["content-type"]).toBe("application/json");
   });
 
+  it("lists language models over GET without posting a completion", async () => {
+    const { transport, calls } = recordingTransport(async () => ({
+      status: 200,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        models: [
+          {
+            id: "grok-4.6",
+            input_modalities: ["text", "image"],
+            output_modalities: ["text"],
+            aliases: ["grok-4.6-latest"],
+          },
+        ],
+      }),
+    }));
+    const grok = createGrokClient({ mode: "live", apiKey: "test-xai-key", transport });
+    const listed = await grok.listLanguageModels();
+    expect(listed.status).toBe(200);
+    expect(listed.models[0]?.id).toBe("grok-4.6");
+    expect(listed.models[0]?.input_modalities).toContain("image");
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.method).toBe("GET");
+    expect(calls[0]?.url).toContain("/language-models");
+  });
+
+  it("does not list language models in fixture mode", async () => {
+    const grok = createGrokClient({
+      mode: "fixture",
+      transport: async () => {
+        throw new Error("network must not be used");
+      },
+    });
+    await expect(grok.listLanguageModels()).rejects.toMatchObject({ code: "invalid-mode" });
+  });
+
   it("maps HTTP API errors without echoing the key", async () => {
     const grok = createGrokClient({
       mode: "live",
@@ -182,6 +217,7 @@ describe("Grok adapter", () => {
       await grok.chatCompletions({ fixtureId: "unused", messages: [] });
     } catch (error) {
       expect(String(error)).not.toContain("secret-must-not-appear");
+      expect(String(error)).toContain("Incorrect API key provided");
     }
   });
 

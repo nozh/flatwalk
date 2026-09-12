@@ -39,6 +39,17 @@ export const GROK_RECTS_FALLBACK_WHEN = [
   "PARSER_URL is unset and Orchestrator must skip the Python service",
 ] as const;
 
+/**
+ * grok-4.6 defaults to reasoning_effort=high and official vision samples use a 3600s client timeout.
+ * grok-rects is latency-sensitive JSON extraction: bound thinking and completion instead of waiting unbounded.
+ */
+export const GROK_RECTS_TIMEOUT_MS = 180_000;
+export const GROK_RECTS_CHAT_EXTRA = {
+  reasoning_effort: "low",
+  max_completion_tokens: 4096,
+  response_format: { type: "json_object" },
+} as const;
+
 export type GrokRectsClient = {
   mode: "fixture" | "live";
   chatCompletions: (request: GrokChatRequest) => Promise<GrokChatResult>;
@@ -75,6 +86,11 @@ export type GrokRectsDiagnostics = {
   intersectingRooms?: [string, string][];
   droppedDoors?: { between: [string, string]; reason: string }[];
   geometryError?: GrokRectsGeometryError;
+  aiResult?: {
+    rooms: { id: string; type: string; rect: [number, number, number, number] }[];
+    doors: { between: [string, string] }[];
+    entrance: string;
+  };
   snap: {
     owner: "modules/ai grok-rects";
     kind: "axis-aligned-rectangles";
@@ -305,6 +321,8 @@ export async function runGrokRects(input: GrokRectsInput): Promise<GrokRectsOutp
   const chat = await grok.chatCompletions({
     fixtureId,
     model: DEFAULT_GROK_MODEL,
+    timeoutMs: GROK_RECTS_TIMEOUT_MS,
+    extra: { ...GROK_RECTS_CHAT_EXTRA },
     messages: visionMessages(input.plan),
   });
   const providerModel = typeof chat.body.model === "string" ? chat.body.model : undefined;
@@ -334,6 +352,13 @@ export async function runGrokRects(input: GrokRectsInput): Promise<GrokRectsOutp
   output.diagnostics.promptVersion = GROK_RECTS_PROMPT_VERSION;
   if (liveApiCalled) output.diagnostics.httpStatus = 200;
   output.diagnostics.note = [chat.note, output.diagnostics.note].filter(Boolean).join(" ");
+  if (parsed.ok) {
+    output.diagnostics.aiResult = {
+      rooms: parsed.value.rooms,
+      doors: parsed.value.doors,
+      entrance: parsed.value.entrance,
+    };
+  }
   if (!parsed.ok && parsed.errors[0]?.includes("not valid JSON")) {
     output.reason = "invalid-rects-json";
   }

@@ -168,7 +168,7 @@ for (const [id, type, label, [x0, x1, y0, y1], opt] of ROOMS) {
   };
 }
 
-const assets = { plan: { kind: "image", url: "plan.png", width: PLAN_W, height: PLAN_H } };
+const assets = { plan: { kind: "image", url: "plan.png", width: PLAN_W, height: PLAN_H, meta: { provenance: PROV, basis: "declared" } } };
 for (const [id, [room, wallKey, c, floor, wallTone]] of Object.entries(PHOTOS)) {
   const n = String(id.slice(1)).padStart(2, "0");
   const [w, h] = PHOTO_SIZE[id] ?? [1920, 1078];
@@ -183,7 +183,7 @@ const model = {
   schemaVersion: "0.1",
   id: `${listing.source.site}-${listing.source.listingId}`,
   revision: 0,
-  source: { site: listing.source.site, url: listing.source.url, fetchedAt: listing.source.fetchedAt },
+  source: { site: listing.source.site, url: listing.source.url, fetchedAt: listing.source.fetchedAt, listingId: listing.source.listingId },
   plan: {
     asset: "plan",
     pxPerMeter: Math.round(pxPerMeter * 1000) / 1000,
@@ -195,7 +195,8 @@ const model = {
     meta: { provenance: PROV, basis: "declared" },
     defaults: {
       wallHeight: 2.8, doorHeight: 2.1, windowSill: 0.9, windowHeight: 1.5,
-      meta: { provenance: PROV, basis: "assumed" },
+      // по схеме contract: meta на каждое поле defaults (значения — допущения architecture.md §3, не измерения)
+      meta: Object.fromEntries(["wallHeight", "doorHeight", "windowSill", "windowHeight"].map((k) => [k, { provenance: PROV, basis: "assumed" }])),
     },
   },
   vertices, walls, openings, rooms, assets,

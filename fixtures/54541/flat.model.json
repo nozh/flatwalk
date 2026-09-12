@@ -5,7 +5,8 @@
   "source": {
     "site": "cityexpert",
     "url": "https://cityexpert.rs/izdavanje-nekretnina/beograd/54541/troiposoban-stan-svetogorska-stari-grad",
-    "fetchedAt": "2026-09-12T11:49:06.375Z"
+    "fetchedAt": "2026-09-12T11:49:06.375Z",
+    "listingId": "54541"
   },
   "plan": {
     "asset": "plan",
@@ -29,8 +30,22 @@
       "windowSill": 0.9,
       "windowHeight": 1.5,
       "meta": {
-        "provenance": "fixture/manual@0.1",
-        "basis": "assumed"
+        "wallHeight": {
+          "provenance": "fixture/manual@0.1",
+          "basis": "assumed"
+        },
+        "doorHeight": {
+          "provenance": "fixture/manual@0.1",
+          "basis": "assumed"
+        },
+        "windowSill": {
+          "provenance": "fixture/manual@0.1",
+          "basis": "assumed"
+        },
+        "windowHeight": {
+          "provenance": "fixture/manual@0.1",
+          "basis": "assumed"
+        }
       }
     }
   },
@@ -879,7 +894,11 @@
       "kind": "image",
       "url": "plan.png",
       "width": 940,
-      "height": 786
+      "height": 786,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "declared"
+      }
     },
     "p1": {
       "kind": "photo",

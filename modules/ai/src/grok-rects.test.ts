@@ -198,6 +198,33 @@ describe("runGrokRects", () => {
     expect(scene.children.length).toBeGreaterThan(0);
   });
 
+  it("refuses fully separated rectangles that Geometry Core maps ambiguously", async () => {
+    const model = emptyModel();
+    const result = await runGrokRects({
+      model,
+      grok: grokClient(
+        JSON.stringify({
+          rooms: [
+            { id: "r1", type: "living", rect: [0, 0, 8, 8] },
+            { id: "r2", type: "bedroom", rect: [12, 12, 8, 8] },
+          ],
+          doors: [{ between: ["r1", "r2"] }],
+          entrance: "r1",
+        }),
+      ),
+    });
+
+    expect(result.patch).toBeNull();
+    expect(result.reason).toMatch(/incompatible-geometry|ambiguous-mapping/);
+    expect(result.diagnostics.geometryError).toMatchObject({
+      code: "ambiguous-mapping",
+    });
+    expect(result.diagnostics.geometryError?.entities?.some((id) => id.includes("r2"))).toBe(true);
+    expect(result.diagnostics.droppedDoors).toEqual(
+      expect.arrayContaining([expect.objectContaining({ between: ["r1", "r2"] })]),
+    );
+  });
+
   it("refuses intersecting rectangles instead of inventing a walkable graph", async () => {
     const result = await runGrokRects({
       model: emptyModel(),

@@ -1,7 +1,14 @@
 import { PatchSchema, type FlatModel, type Op, type Patch } from "@flatwalk/contract";
+import { GeometryError, adjacency, faces, roomPolygon } from "@flatwalk/geometry";
 import { createGrokClient, type GrokChatRequest, type GrokChatResult } from "./grok.js";
 import { grokRectsPrompt } from "./grok-rects-prompt.js";
-import { assumedPlanMeta, graphRoomToContract, rectsToGraph, snapBoundaryNote } from "./grok-rects-graph.js";
+import {
+  assumedPlanMeta,
+  graphRoomToContract,
+  rectsToGraph,
+  snapBoundaryNote,
+  type RectGraph,
+} from "./grok-rects-graph.js";
 import {
   GROK_RECTS_CONFIDENCE,
   GROK_RECTS_FIXTURE_ID,
@@ -46,6 +53,12 @@ export type GrokRectsOverlayStatus = {
   note: string;
 };
 
+export type GrokRectsGeometryError = {
+  code: string;
+  message: string;
+  entities: string[];
+};
+
 export type GrokRectsDiagnostics = {
   strategy: "grok-rects";
   synthetic?: boolean;
@@ -54,6 +67,7 @@ export type GrokRectsDiagnostics = {
   schemaErrors?: string[];
   intersectingRooms?: [string, string][];
   droppedDoors?: { between: [string, string]; reason: string }[];
+  geometryError?: GrokRectsGeometryError;
   snap: {
     owner: "modules/ai grok-rects";
     kind: "axis-aligned-rectangles";
@@ -130,6 +144,42 @@ function visionMessages(plan?: GrokRectsPlan) {
   ];
 }
 
+function modelWithGraph(model: FlatModel, graph: RectGraph): FlatModel {
+  const rooms: FlatModel["rooms"] = {};
+  for (const id of Object.keys(graph.rooms)) {
+    rooms[id] = graphRoomToContract(graph.rooms[id]!);
+  }
+  const plan: FlatModel["plan"] = {
+    ...model.plan,
+    meta: { ...assumedPlanMeta(), basis: "assumed" },
+  };
+  delete plan.pxPerMeter;
+  return {
+    ...model,
+    vertices: graph.vertices,
+    walls: graph.walls,
+    openings: graph.openings,
+    rooms,
+    plan,
+  };
+}
+
+function publicGeometryError(model: FlatModel): GrokRectsGeometryError | null {
+  try {
+    faces(model);
+    for (const id of Object.keys(model.rooms).sort()) {
+      roomPolygon(model, id);
+    }
+    adjacency(model);
+    return null;
+  } catch (error) {
+    if (error instanceof GeometryError) {
+      return { code: error.code, message: error.message, entities: [...error.entities] };
+    }
+    throw error;
+  }
+}
+
 function setOp(path: string, value: Extract<Op, { op: "set" }>["value"]): Op {
   return { op: "set", path, value };
 }
@@ -197,6 +247,19 @@ export function grokRectsGraphToPatch(model: FlatModel, result: ReturnType<typeo
       diagnostics: baseDiagnostics({
         schemaErrors: parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`),
         droppedDoors: graph.droppedDoors,
+      }),
+    };
+  }
+
+  const geometryError = publicGeometryError(modelWithGraph(model, graph));
+  if (geometryError) {
+    return {
+      patch: null,
+      reason: "incompatible-geometry",
+      diagnostics: baseDiagnostics({
+        droppedDoors: graph.droppedDoors,
+        geometryError,
+        schemaErrors: [`Geometry Core ${geometryError.code}: ${geometryError.message}`],
       }),
     };
   }

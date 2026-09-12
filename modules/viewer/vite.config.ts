@@ -1,6 +1,7 @@
 import { defineConfig, type Plugin, type PreviewServer, type ViteDevServer } from 'vite';
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { extname, join, normalize, relative, resolve, sep } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { dirname, extname, join, normalize, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
@@ -40,9 +41,56 @@ function sendFile(root: string, urlPath: string, res: ServerResponse): void {
   res.end(readFileSync(file));
 }
 
+type FixtureReportAsset = { fileName: string; url: string; json: string; modelId: string; revision: number };
+
+function viteNodeEntry(): string {
+  const candidates = [
+    resolve(viewerRoot, 'node_modules/vite-node/vite-node.mjs'),
+    resolve(repoRoot, 'node_modules/vite-node/vite-node.mjs'),
+  ];
+  const found = candidates.find((path) => existsSync(path));
+  if (!found) throw new Error('vite-node is required to generate the 54541 Validator report at build time.');
+  return found;
+}
+
+let cachedReport: FixtureReportAsset | undefined;
+
+function loadFixtureValidationReport(): FixtureReportAsset {
+  if (cachedReport) return cachedReport;
+  const outPath = resolve(viewerRoot, '.generated/fixture-report.json');
+  mkdirSync(dirname(outPath), { recursive: true });
+  execFileSync(process.execPath, [viteNodeEntry(), resolve(viewerRoot, 'scripts/write-fixture-report.ts')], {
+    cwd: viewerRoot,
+    stdio: 'inherit',
+    env: process.env,
+  });
+  cachedReport = JSON.parse(readFileSync(outPath, 'utf8')) as FixtureReportAsset;
+  return cachedReport;
+}
+
+function sendFixtureValidationReport(urlPath: string, res: ServerResponse): boolean {
+  const path = decodeURIComponent(urlPath.split('?')[0] ?? '');
+  try {
+    const artifact = loadFixtureValidationReport();
+    if (path !== artifact.url) return false;
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.end(artifact.json);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function attachStatic(server: ViteDevServer | PreviewServer): void {
   server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
     const url = req.url ?? '';
+    if (url.startsWith('/fixtures/54541/validation/')) {
+      if (!sendFixtureValidationReport(url, res)) {
+        res.statusCode = 404;
+        res.end('Not found');
+      }
+      return;
+    }
     if (url.startsWith('/fixtures/54541/')) {
       if (!existsSync(fixtureDir)) {
         res.statusCode = 404;
@@ -79,6 +127,9 @@ function staticData(): Plugin {
     configurePreviewServer: attachStatic,
     generateBundle() {
       emitTree(this, fixtureDir, 'fixtures/54541');
+      const artifact = loadFixtureValidationReport();
+      this.emitFile({ type: 'asset', fileName: artifact.fileName, source: artifact.json });
+      if (process.env.VITE_PUBLIC_DEMO === 'true') return;
       emitTree(this, join(runDir, 'model'), 'model');
       emitTree(this, join(runDir, 'materials'), 'materials');
       emitTree(this, join(runDir, 'validation'), 'validation');

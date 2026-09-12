@@ -97,7 +97,7 @@ describe('renderOverlaySvg', () => {
     expect(host.querySelectorAll('[data-wall]')).toHaveLength(34);
     expect(host.querySelectorAll('.overlay-opening.is-door')).toHaveLength(12);
     expect(host.querySelectorAll('.overlay-opening.is-window')).toHaveLength(8);
-    expect(host.querySelector('.overlay-entrance')?.textContent).toContain('вход');
+    expect(host.querySelector('.overlay-entrance')?.textContent).toContain('entrance');
     expect(host.textContent).not.toMatch(/\b[rwov]\d+\b/);
   });
 

@@ -207,6 +207,11 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: Listing
     sceneSlot?.querySelector<HTMLElement>('canvas')?.focus({ preventScroll: true });
   }
 
+  /** On stacked mobile layout the listing sits below the canvas; entering walk must not leave the HUD off-screen. */
+  function bringStageIntoView(): void {
+    root.querySelector<HTMLElement>('.stage-canvas')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+
   function startWalk(): void {
     if (!walkAvailable) return;
     const controller = ensureScene();
@@ -214,6 +219,7 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: Listing
     // Show the stage first: focusing a canvas inside a hidden container fails and keys would stay on the toolbar button.
     showView('walk');
     controller.setMode('walk');
+    bringStageIntoView();
     focusCanvas();
   }
 
@@ -228,7 +234,10 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: Listing
     const controller = ensureScene();
     if (!controller) return;
     showView('walk');
-    if (controller.enterRoom(roomId)) focusCanvas();
+    if (controller.enterRoom(roomId)) {
+      bringStageIntoView();
+      focusCanvas();
+    }
     else { showView(lastSceneView); notify('No valid standing point was found in this room'); }
   }
 

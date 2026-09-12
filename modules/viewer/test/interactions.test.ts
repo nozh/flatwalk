@@ -48,7 +48,7 @@ describe('room selection', () => {
   it('selecting a room from the list updates the panel, the list and the plan marks', () => {
     const root = setup();
     click(root.querySelector('#room-list button[data-select="r3"]'));
-    expect(root.querySelector('#room-panel h2')?.textContent).toBe('Кухня');
+    expect(root.querySelector('#room-panel h2')?.textContent).toBe('Kitchen');
     expect(root.querySelector('#room-list button[data-select="r3"]')?.getAttribute('aria-current')).toBe('true');
     expect(root.querySelector('#room-list button[data-select="all"]')?.getAttribute('aria-current')).toBe('false');
     expect(root.querySelector('[data-room="r3"]')?.classList.contains('is-selected')).toBe(true);
@@ -60,13 +60,13 @@ describe('room selection', () => {
   it('selecting a room on the plan by click or keyboard works and the whole flat resets it', () => {
     const root = setup();
     click(root.querySelector('[data-room="r4"] circle'));
-    expect(root.querySelector('#room-panel h2')?.textContent).toBe('Спальня');
+    expect(root.querySelector('#room-panel h2')?.textContent).toBe('Bedroom');
     const bath = root.querySelector('[data-room="r5"]');
     if (!bath) throw new Error('no r5');
     key(bath, 'Enter');
-    expect(root.querySelector('#room-panel h2')?.textContent).toBe('Ванная');
+    expect(root.querySelector('#room-panel h2')?.textContent).toBe('Bathroom');
     click(root.querySelector('#room-list button[data-select="all"]'));
-    expect(root.querySelector('#room-panel h2')?.textContent).toBe('Вся квартира');
+    expect(root.querySelector('#room-panel h2')?.textContent).toBe('Entire apartment');
     expect(root.querySelectorAll('.overlay-room.is-selected')).toHaveLength(0);
     expect(root.querySelectorAll('.overlay-wall.is-faced')).toHaveLength(0);
   });
@@ -94,8 +94,8 @@ describe('gallery', () => {
     const lightbox = root.querySelector<HTMLDialogElement>('#lightbox');
     expect(lightbox?.open).toBe(true);
     expect(root.querySelector('#lightbox-image')?.getAttribute('src')).toContain('photo-01.jpg');
-    expect(root.querySelector('#lightbox-caption')?.textContent).toContain('Гостиная, 1 из 3');
-    expect(root.querySelector('#lightbox-caption')?.textContent).toContain('фото 1');
+    expect(root.querySelector('#lightbox-caption')?.textContent).toContain('Living room, 1 of 3');
+    expect(root.querySelector('#lightbox-caption')?.textContent).toContain('photo 1');
     key(document, 'ArrowRight');
     expect(root.querySelector('#lightbox-image')?.getAttribute('src')).toContain('photo-02.jpg');
     key(document, 'ArrowLeft');
@@ -109,8 +109,8 @@ describe('gallery', () => {
     const root = setup();
     click(root.querySelector('.thumbs.is-grid .thumb[data-photo="p5"]'));
     expect(root.querySelector<HTMLDialogElement>('#lightbox')?.open).toBe(true);
-    expect(root.querySelector('#lightbox-caption')?.textContent).toContain('Фото 5 из 17');
-    expect(root.querySelector('#lightbox-caption')?.textContent).toContain('Столовая и вход');
+    expect(root.querySelector('#lightbox-caption')?.textContent).toContain('Photo 5 of 17');
+    expect(root.querySelector('#lightbox-caption')?.textContent).toContain('Dining area and entrance');
     click(root.querySelector('[data-action="lightbox-close"]'));
     expect(root.querySelector<HTMLDialogElement>('#lightbox')?.open).toBe(false);
   });
@@ -141,7 +141,7 @@ describe('stage', () => {
     expect(mountScene).toHaveBeenCalledTimes(1);
     click(root.querySelector('button[data-view="plan"]'));
     expect(root.querySelector<HTMLElement>('#stage-plan')?.hidden).toBe(false);
-    expect(root.querySelector('#stage-status')?.textContent).toContain('Исходный план');
+    expect(root.querySelector('#stage-status')?.textContent).toContain('Source floor plan');
     controller?.dispose();
     expect(disposeScene).toHaveBeenCalledTimes(1);
   });
@@ -191,12 +191,16 @@ describe('walk', () => {
 
   it('starts the walk from the toolbar, shows the HUD and leaves it with Escape', () => {
     const root = setupWalk();
+    const canvas = root.querySelector<HTMLElement>('.stage-canvas');
+    const intoView = vi.fn();
+    if (canvas) canvas.scrollIntoView = intoView;
     click(root.querySelector('button[data-action="walk"]'));
+    expect(intoView).toHaveBeenCalled();
     expect(mountWalk).toHaveBeenCalledTimes(1);
     expect(fake.setMode).toHaveBeenLastCalledWith('walk');
     expect(root.querySelector('.app')?.getAttribute('data-view')).toBe('walk');
     expect(root.querySelector<HTMLElement>('#walk-hud')?.hidden).toBe(false);
-    expect(root.querySelector('button[data-action="walk"]')?.textContent).toContain('Выйти');
+    expect(root.querySelector('button[data-action="walk"]')?.textContent).toContain('Exit walkthrough');
     expect(root.querySelector('#stage-status')?.textContent).toMatch(/WASD/);
     key(document, 'Escape');
     expect(fake.setMode).toHaveBeenLastCalledWith('overview');
@@ -219,11 +223,11 @@ describe('walk', () => {
     const root = setupWalk();
     click(root.querySelector('button[data-action="walk"]'));
     hooks.onRoom?.('r3');
-    expect(root.querySelector('#hud-room')?.textContent).toBe('Кухня');
-    expect(root.querySelector('#hud-area')?.textContent).toMatch(/м²/);
+    expect(root.querySelector('#hud-room')?.textContent).toBe('Kitchen');
+    expect(root.querySelector('#hud-area')?.textContent).toMatch(/m²/);
     expect(root.querySelector('#room-list button[data-select="r3"]')?.getAttribute('aria-current')).toBe('true');
     hooks.onRoom?.(null);
-    expect(root.querySelector('#hud-room')?.textContent).toMatch(/вне помещений/i);
+    expect(root.querySelector('#hud-room')?.textContent).toMatch(/outside rooms/i);
   });
 
   it('teleports into the selected room from the panel and from a projected label', () => {

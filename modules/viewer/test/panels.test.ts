@@ -30,10 +30,10 @@ describe('renderRoomList', () => {
     const buttons = host.querySelectorAll('button[data-select]');
     expect(buttons).toHaveLength(11);
     expect(buttons[0]?.getAttribute('data-select')).toBe('all');
-    expect(buttons[0]?.textContent).toContain('Вся квартира');
+    expect(buttons[0]?.textContent).toContain('Entire apartment');
     expect(buttons[0]?.textContent).toContain('17');
     const living = host.querySelector('button[data-select="r1"]');
-    expect(living?.textContent).toContain('Гостиная');
+    expect(living?.textContent).toContain('Living room');
     expect(living?.textContent).toContain('3');
     expect(host.querySelector('button[data-select="r6"]')?.getAttribute('aria-current')).toBe('true');
     expect(living?.getAttribute('aria-current')).toBe('false');
@@ -46,21 +46,21 @@ describe('renderRoomList', () => {
 describe('renderRoomPanel', () => {
   it('describes the whole flat from declared data and shows every photo', () => {
     const host = mount(renderRoomPanel(view, 'all'));
-    expect(host.querySelector('h2')?.textContent).toBe('Вся квартира');
-    expect(host.textContent).toContain('105 м²');
-    expect(host.textContent).toContain('3,5');
-    expect(host.textContent).toContain('10 помещений');
-    expect(host.textContent).toContain('17 фотографий');
+    expect(host.querySelector('h2')?.textContent).toBe('Entire apartment');
+    expect(host.textContent).toContain('105 m²');
+    expect(host.textContent).toContain('3.5');
+    expect(host.textContent).toContain('10 rooms');
+    expect(host.textContent).toContain('17 photos');
     expect(host.querySelectorAll('button[data-photo]')).toHaveLength(17);
-    expect(host.querySelector('button[data-photo="p1"] img')?.getAttribute('alt')).toBe('Фото 1, Гостиная');
+    expect(host.querySelector('button[data-photo="p1"] img')?.getAttribute('alt')).toBe('Photo 1, Living room');
     expect(host.querySelector('button[data-photo="p1"]')?.getAttribute('data-faces')).toBe('w7');
   });
 
   it('describes a room with its origin and confidence and lists only its photos', () => {
     const host = mount(renderRoomPanel(view, 'r1'));
-    expect(host.querySelector('h2')?.textContent).toBe('Гостиная');
-    expect(host.textContent).toContain('жилая комната');
-    expect(host.textContent).toMatch(/выведено из плана/i);
+    expect(host.querySelector('h2')?.textContent).toBe('Living room');
+    expect(host.textContent).toContain('living room');
+    expect(host.textContent).toMatch(/inferred from the floor plan/i);
     expect(host.textContent).toContain('90 %');
     expect(host.querySelectorAll('.thumb[data-photo]')).toHaveLength(3);
     expect(host.querySelector('.photo-main[data-photo="p1"] img')?.getAttribute('src')).toBe('/fixtures/54541/photos/photo-01.jpg');
@@ -71,10 +71,10 @@ describe('renderRoomPanel', () => {
 
   it('shows the model question and an honest empty gallery for a room without photos', () => {
     const host = mount(renderRoomPanel(view, 'r6'));
-    expect(host.querySelector('h2')?.textContent).toBe('Коридор');
-    expect(host.textContent).toContain('узкий коридор');
+    expect(host.querySelector('h2')?.textContent).toBe('Corridor');
+    expect(host.textContent).toContain('narrow corridor');
     expect(host.querySelectorAll('button[data-photo]')).toHaveLength(0);
-    expect(host.textContent).toContain('фотографии не привязаны');
+    expect(host.textContent).toContain('No photos are assigned');
   });
 
   it('falls back to the shared gallery when the model binds no photo to rooms', () => {
@@ -84,7 +84,7 @@ describe('renderRoomPanel', () => {
     }
     const unbound = listingView(model(raw), { kind: 'fixture' });
     const room = mount(renderRoomPanel(unbound, 'r1'));
-    expect(room.textContent).toContain('не привязаны к помещениям');
+    expect(room.textContent).toContain('Photos have not yet been assigned');
     expect(room.querySelector('button[data-select="all"]')).not.toBeNull();
     expect(room.querySelectorAll('button[data-photo]')).toHaveLength(0);
     const all = mount(renderRoomPanel(unbound, 'all'));
@@ -93,7 +93,7 @@ describe('renderRoomPanel', () => {
 
   it('says plainly when the model has no photos at all', () => {
     const host = mount(renderRoomPanel(listingView(model(synthetic), { kind: 'static' }), 'all'));
-    expect(host.textContent).toContain('нет фотографий');
+    expect(host.textContent).toContain('The model has no photos');
     expect(host.querySelectorAll('button[data-photo]')).toHaveLength(0);
   });
 });
@@ -101,12 +101,12 @@ describe('renderRoomPanel', () => {
 describe('renderAssumptionStrip', () => {
   it('states scale, ceiling default, open questions and the missing verification', () => {
     const host = mount(renderAssumptionStrip(view, { status: 'missing', url: '/x' }));
-    expect(host.textContent).toContain('подобран по заявленной площади');
+    expect(host.textContent).toContain('fitted to the listed area');
     expect(host.textContent).toContain('70 %');
-    expect(host.textContent).toContain('2,8 м');
-    expect(host.textContent).toContain('по умолчанию');
+    expect(host.textContent).toContain('2.8 m');
+    expect(host.textContent).toContain('default assumption');
     expect(host.textContent).toContain('6');
-    expect(host.textContent).toMatch(/не проверен/);
+    expect(host.textContent).toMatch(/not been verified/);
     expect(host.querySelector('button[data-action="about"]')).not.toBeNull();
   });
 
@@ -114,8 +114,8 @@ describe('renderAssumptionStrip', () => {
     const raw = structuredClone(synthetic);
     delete raw.plan.pxPerMeter;
     const host = mount(renderAssumptionStrip(listingView(model(raw), { kind: 'static' }), { status: 'missing', url: '/x' }));
-    expect(host.textContent).toContain('Масштаб плана не определён');
-    expect(host.textContent).not.toContain('вопрос');
+    expect(host.textContent).toContain('Floor-plan scale is unknown');
+    expect(host.textContent).not.toContain('Open questions');
   });
 });
 
@@ -123,15 +123,15 @@ describe('renderAbout', () => {
   it('explains source, producers, defaults, questions, verification and the static mode', () => {
     const host = mount(renderAbout(view, { status: 'missing', url: '/x' }, { kind: 'fixture' }));
     expect(host.textContent).toContain('CityExpert');
-    expect(host.textContent).toContain('12 сентября 2026');
+    expect(host.textContent).toContain('September 12, 2026');
     expect(host.querySelector('a[href^="https://cityexpert.rs"]')?.getAttribute('rel')).toContain('noopener');
-    expect(host.textContent).toContain('ручная разметка эталона');
+    expect(host.textContent).toContain('manual reference markup');
     expect(host.querySelectorAll('.about-defaults li')).toHaveLength(4);
     expect(host.querySelectorAll('.about-questions li')).toHaveLength(6);
-    expect(host.textContent).toContain('Помещение «Коридор»');
-    expect(host.textContent).toContain('Отчёт');
-    expect(host.textContent).toMatch(/не проверен/);
-    expect(host.textContent).toMatch(/правки не сохраняются/i);
+    expect(host.textContent).toContain('Room “Corridor”');
+    expect(host.textContent).toContain('Validation');
+    expect(host.textContent).toMatch(/unverified/);
+    expect(host.textContent).toMatch(/Changes are not saved/i);
     expect(host.textContent).toContain('cityexpert-54541');
   });
 
@@ -150,25 +150,25 @@ describe('renderAbout', () => {
       },
     };
     const host = mount(renderAbout(view, report, { kind: 'static' }));
-    expect(host.textContent).toContain('Геометрия не подтверждена: связность комнат не пройдена. Ширина проходов не проверена.');
-    expect(host.textContent).not.toMatch(/прогулка готова/i);
-    expect(host.textContent).toContain('Подтверждённых сведений модели: 35 %');
-    expect(host.textContent).toContain('доля сущностей, подтверждённых человеком или с уверенностью не ниже 0,6');
-    expect(host.textContent).not.toMatch(/35 % проверок/);
+    expect(host.textContent).toContain('Geometry is not confirmed: room connectivity failed. Clearance is not verified.');
+    expect(host.textContent).not.toMatch(/walkthrough is ready/i);
+    expect(host.textContent).toContain('Confirmed model data: 35 %');
+    expect(host.textContent).toContain('entities confirmed by a person or with confidence of at least 0.6');
+    expect(host.textContent).not.toMatch(/35 % of passed checks/);
     expect(host.querySelector('.about-failed')?.textContent).toContain('Комната недостижима от входа');
     expect(host.querySelector('.about-unverified')?.textContent).toContain('Ширина дверей не проверялась');
     expect(host.textContent).toContain('низкая уверенность');
-    expect(host.textContent).toContain('1 пройдена');
-    expect(host.textContent).toContain('1 не пройдена');
-    expect(host.textContent).toContain('1 не проверена');
+    expect(host.textContent).toContain('1 passed');
+    expect(host.textContent).toContain('1 failed');
+    expect(host.textContent).toContain('1 unverified');
   });
 });
 
 describe('renderStageStatus', () => {
   it('tells the truth about what the stage shows', () => {
-    expect(renderStageStatus('plan', 'plan')).toContain('3D-сцена ещё не построена');
-    expect(renderStageStatus('plan', 'scheme')).toContain('Исходный план недоступен');
-    expect(renderStageStatus('plan', 'plan-only')).toContain('масштаб');
+    expect(renderStageStatus('plan', 'plan')).toContain('The 3D scene has not been built yet');
+    expect(renderStageStatus('plan', 'scheme')).toContain('The source floor plan is unavailable');
+    expect(renderStageStatus('plan', 'plan-only')).toContain('scale');
     expect(renderStageStatus('scene', 'plan')).toContain('Builder');
   });
 });
@@ -203,7 +203,7 @@ describe('Validator messages in the about dialog', () => {
   it('replaces room ids in check and review messages with room names', () => {
     const about = mount(renderAbout(view, trialReport, { kind: 'fixture' }));
     expect(about.querySelector('.about-navigation')?.textContent).not.toContain('r2');
-    expect(about.querySelector('.about-review')?.textContent).toContain('«Коридор»');
+    expect(about.querySelector('.about-review')?.textContent).toContain('«Corridor»');
     expect(about.querySelector('.about-review')?.textContent).not.toMatch(/\br6\b/);
   });
 });
@@ -211,32 +211,32 @@ describe('Validator messages in the about dialog', () => {
 describe('walk readiness wording from the report', () => {
   it('never announces a ready walk from walkReady alone in the strip, the stage status and the about dialog', () => {
     const strip = mount(renderAssumptionStrip(view, trialReport));
-    expect(strip.textContent).toContain('Связность комнат проверена. Ширина проходов не проверена.');
-    expect(strip.textContent).not.toMatch(/прогулка готова|прогулка возможна/i);
+    expect(strip.textContent).toContain('Room connectivity is verified. Clearance is not verified.');
+    expect(strip.textContent).not.toMatch(/walkthrough is ready/i);
     const prep = prepareWalk(model(reference));
     const walkStatus = renderStageStatus('walk', 'plan', prep, 0, trialReport);
-    expect(walkStatus).toContain('Пробная прогулка');
-    expect(walkStatus).toContain('Ширина проходов не проверена');
-    expect(renderStageStatus('top', 'plan', prep, 0, trialReport)).toContain('Пробная прогулка');
+    expect(walkStatus).toContain('Trial walkthrough');
+    expect(walkStatus).toContain('Clearance is not verified');
+    expect(renderStageStatus('top', 'plan', prep, 0, trialReport)).toContain('Trial walkthrough');
     const about = mount(renderAbout(view, trialReport, { kind: 'fixture' }, prep));
     const navigation = about.querySelector('.about-navigation')?.textContent ?? '';
-    expect(navigation).toContain('Связность комнат: проверена.');
-    expect(navigation).toContain('Ширина проходов: не проверена (пропущено).');
-    expect(about.textContent).toContain('1 не проверена');
-    expect(about.textContent).toContain('1 пропущена');
+    expect(navigation).toContain('Room connectivity: verified.');
+    expect(navigation).toContain('Clearance: not verified (skipped).');
+    expect(about.textContent).toContain('1 unverified');
+    expect(about.textContent).toContain('1 skipped');
     expect(about.querySelector('.about-skipped')?.textContent).toContain('Проход ≥ 0.6 м с учётом радиуса аватара 0.25 м не проверялся.');
     expect(about.querySelector('.about-unverified')?.textContent).toContain('Ширина дверей не проверялась.');
-    expect(about.textContent).toContain('Подтверждённых сведений модели: 92 %');
+    expect(about.textContent).toContain('Confirmed model data: 92 %');
     expect(about.querySelector('.about-navigation')?.textContent).not.toMatch(/\br\d+\b/);
-    expect(about.textContent).not.toMatch(/прогулка готова/i);
+    expect(about.textContent).not.toMatch(/walkthrough is ready/i);
   });
 
   it('marks a report for another revision as not applicable', () => {
     const stale: ReportResult = { ...trialReport, status: 'stale' } as ReportResult;
     const strip = mount(renderAssumptionStrip(view, stale));
-    expect(strip.textContent).toContain('другой модели или ревизии');
+    expect(strip.textContent).toContain('different model or revision');
     const about = mount(renderAbout(view, stale, { kind: 'fixture' }));
-    expect(about.textContent).toContain('другой модели или ревизии');
+    expect(about.textContent).toContain('another model or revision');
     expect(about.querySelector('.about-navigation')).toBeNull();
   });
 });

@@ -26,12 +26,12 @@ function mount(html: string) {
 describe('renderShell', () => {
   it('shows a loading state', () => {
     const root = mount(renderShell({ kind: 'loading' }));
-    expect(root.textContent).toContain('Загружаем модель');
+    expect(root.textContent).toContain('Loading model');
   });
 
   it('explains a missing static file and offers the bundled reference', () => {
     const root = mount(renderShell({ kind: 'missing', source: { kind: 'static' }, url: '/model/latest.json' }));
-    expect(root.textContent).toContain('Модель не найдена');
+    expect(root.textContent).toContain('Model not found');
     expect(root.textContent).toContain('/model/latest.json');
     expect(root.querySelector('a[href="?src=fixture"]')).not.toBeNull();
     expect(root.querySelector('button[data-action="reload"]')).not.toBeNull();
@@ -39,14 +39,14 @@ describe('renderShell', () => {
 
   it('explains a missing 54541 fixture without treating the synthetic test as that listing', () => {
     const root = mount(renderShell({ kind: 'missing', source: { kind: 'fixture' }, url: '/fixtures/54541/flat.model.json' }));
-    expect(root.textContent).toContain('Эталон 54541 недоступен');
+    expect(root.textContent).toContain('Reference model 54541 is unavailable');
     expect(root.textContent).not.toContain('viewer-synthetic');
     expect(root.querySelector('a[href="./"]')).not.toBeNull();
   });
 
   it('shows contract issues for an invalid model behind a details toggle', () => {
     const root = mount(renderShell({ kind: 'invalid', issues: ['schemaVersion: Invalid', 'rooms.r1.anchor: Required'] }));
-    expect(root.textContent).toContain('Модель не прошла проверку');
+    expect(root.textContent).toContain('Model validation failed');
     expect(root.textContent).toContain('2');
     expect(root.querySelector('details')?.textContent).toContain('schemaVersion: Invalid');
   });
@@ -54,21 +54,21 @@ describe('renderShell', () => {
   it('renders id, rooms, the empty-scene notice and a plan-unavailable fallback', () => {
     const root = mount(renderShell({ kind: 'ready', model: model(synthetic), source: { kind: 'static' }, plan: { status: 'unavailable' } }));
     expect(root.textContent).toContain('viewer-synthetic');
-    expect(root.textContent).toContain('Гостиная');
-    expect(root.textContent).toContain('Кухня');
-    expect(root.textContent).toContain('3D-сцена ещё не построена');
-    expect(root.textContent).toContain('Исходный план недоступен');
+    expect(root.textContent).toContain('Living room');
+    expect(root.textContent).toContain('Kitchen');
+    expect(root.textContent).toContain('The 3D scene has not been built');
+    expect(root.textContent).toContain('The source floor plan is unavailable');
     expect(root.querySelector('#scene-slot')).not.toBeNull();
-    expect(root.textContent).toContain('Статический режим');
+    expect(root.textContent).toContain('Static mode');
     expect(root.querySelector('svg.plan-overlay.is-scheme')).not.toBeNull();
   });
 
   it('builds the full listing screen for the reference without technical ids in the main areas', () => {
     const root = mount(renderShell({ kind: 'ready', model: model(reference), source: { kind: 'fixture' }, plan: { status: 'ok' }, report: { status: 'missing', url: '/x' } }));
-    expect(root.querySelector('h1')?.textContent).toBe('Квартира 105 м²');
+    expect(root.querySelector('h1')?.textContent).toBe('Apartment 105 m²');
     expect(root.querySelector('svg.plan-overlay.is-plan image')?.getAttribute('href')).toBe('/fixtures/54541/plan.png');
     expect(root.querySelectorAll('#room-list button[data-select]')).toHaveLength(11);
-    expect(root.querySelector('#room-panel h2')?.textContent).toBe('Вся квартира');
+    expect(root.querySelector('#room-panel h2')?.textContent).toBe('Entire apartment');
     expect(root.querySelector('button[data-view="scene"]')).not.toBeNull();
     expect(root.querySelector('button[data-action="toggle-marks"]')?.getAttribute('aria-pressed')).toBe('true');
     const walk = root.querySelector<HTMLButtonElement>('button[data-action="walk"]');
@@ -95,7 +95,7 @@ describe('renderShell with Builder and Geometry Core prepared', () => {
     expect(root.querySelectorAll('#walk-hud button[data-key]')).toHaveLength(6);
     expect(root.querySelector('#walk-hud button[data-action="lock-mouse"]')).not.toBeNull();
     expect(root.querySelectorAll('.about-geometry li').length).toBeGreaterThanOrEqual(4);
-    expect(root.querySelector('.about-geometry')?.textContent).toContain('прогулка доступна');
+    expect(root.querySelector('.about-geometry')?.textContent).toContain('walkthrough is available');
     expect(root.querySelector('.scene-empty')).toBeNull();
   });
 
@@ -103,9 +103,9 @@ describe('renderShell with Builder and Geometry Core prepared', () => {
     const parsed = model(synthetic);
     const root = mount(renderShell({ kind: 'ready', model: parsed, source: { kind: 'static' }, plan: { status: 'unavailable' }, prep: prepareWalk(parsed) }));
     expect(root.querySelector<HTMLButtonElement>('button[data-action="walk"]')?.disabled).toBe(true);
-    expect(root.querySelector('#walk-hint')?.textContent).toMatch(/вход|старт/i);
+    expect(root.querySelector('#walk-hint')?.textContent).toMatch(/entrance|start/i);
     expect(root.querySelector<HTMLButtonElement>('button[data-view="top"]')?.disabled).toBe(false);
-    expect(root.querySelector('.about-geometry')?.textContent).toMatch(/недоступна/);
+    expect(root.querySelector('.about-geometry')?.textContent).toMatch(/unavailable/i);
   });
 
   it('disables the top view and the walk without a prepared scene but keeps the overview as an empty stage', () => {
@@ -113,7 +113,7 @@ describe('renderShell with Builder and Geometry Core prepared', () => {
     expect(root.querySelector<HTMLButtonElement>('button[data-view="top"]')?.disabled).toBe(true);
     expect(root.querySelector<HTMLButtonElement>('button[data-view="scene"]')?.disabled).toBe(false);
     expect(root.querySelector<HTMLButtonElement>('button[data-action="walk"]')?.disabled).toBe(true);
-    expect(root.textContent).toContain('3D-сцена ещё не построена');
+    expect(root.textContent).toContain('The 3D scene has not been built');
   });
 });
 
@@ -134,8 +134,8 @@ describe('renderShell with a validation report', () => {
     };
     const root = mount(renderShell({ kind: 'ready', model: parsed, source: { kind: 'fixture' }, plan: { status: 'ok' }, prep: prepareWalk(parsed), report }));
     expect(root.querySelector<HTMLButtonElement>('button[data-action="walk"]')?.disabled).toBe(false);
-    expect(root.querySelector('button[data-action="walk"]')?.textContent).toContain('Пробная прогулка');
-    expect(root.querySelector('#walk-hint')?.textContent).toContain('ширина проходов не проверена');
-    expect(root.querySelector('#hud-verification')?.textContent).toContain('Связность комнат проверена. Ширина проходов не проверена.');
+    expect(root.querySelector('button[data-action="walk"]')?.textContent).toContain('Trial walkthrough');
+    expect(root.querySelector('#walk-hint')?.textContent).toContain('clearance is unverified');
+    expect(root.querySelector('#hud-verification')?.textContent).toContain('Room connectivity is verified. Clearance is not verified.');
   });
 });

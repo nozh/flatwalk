@@ -25,7 +25,7 @@ describe('prepareWalk', () => {
     expect(prep.walk.segments.length).toBeGreaterThan(30);
     expect(Object.keys(prep.walk.polygons)).toHaveLength(10);
     expect(prep.walk.areas?.rooms.r1 ?? 0).toBeGreaterThan(5);
-    expect(prep.diagnostics.some((line) => /10 из 10/.test(line))).toBe(true);
+    expect(prep.diagnostics.some((line) => /10 of 10/.test(line))).toBe(true);
     expect(prep.diagnostics.join(' ')).not.toMatch(/\b[rwo]\d+\b/);
   });
 
@@ -34,7 +34,7 @@ describe('prepareWalk', () => {
     expect(prep.scene).not.toBeNull();
     expect(prep.walk.available).toBe(false);
     if (prep.walk.available) return;
-    expect(prep.walk.reason).toMatch(/вход|старт/i);
+    expect(prep.walk.reason).toMatch(/entrance|start/i);
     expect(prep.diagnostics.length).toBeGreaterThan(0);
   });
 });

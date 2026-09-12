@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "0.1"
+    },
+    "modelId": {
+      "type": "string",
+      "pattern": "^(?!(?:__proto__|prototype|constructor)(?:\\.|$))[A-Za-z0-9_][A-Za-z0-9_-]*$(?![\\s\\S])"
+    },
+    "baseRevision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "currentRevision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "touchedPaths": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(?!(?:__proto__|prototype|constructor)(?:\\.|$))[A-Za-z0-9_][A-Za-z0-9_-]*(?:\\.(?!(?:__proto__|prototype|constructor)(?:\\.|$))[A-Za-z0-9_][A-Za-z0-9_-]*)*$(?![\\s\\S])"
+            }
+          },
+          "touchedOwners": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(?!(?:__proto__|prototype|constructor)(?:\\.|$))[A-Za-z0-9_][A-Za-z0-9_-]*(?:\\.(?!(?:__proto__|prototype|constructor)(?:\\.|$))[A-Za-z0-9_][A-Za-z0-9_-]*)*$(?![\\s\\S])"
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "touchedPaths",
+          "touchedOwners"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "modelId",
+    "baseRevision",
+    "currentRevision",
+    "changes"
+  ],
+  "additionalProperties": false,
+  "$id": "https://flatwalk.local/contract/0.1/RevisionContext.schema.json",
+  "title": "RevisionContext",
+  "description": "Generated from Zod. Full validation also requires semantic-rules.json and the contract runtime."
+}

@@ -1,0 +1,129 @@
+{
+  "schemaVersion": "0.1",
+  "modelRules": [
+    {
+      "path": "plan.asset",
+      "kind": "reference",
+      "target": "$.assets",
+      "assetKinds": [
+        "plan",
+        "image"
+      ]
+    },
+    {
+      "path": "walls.*.a",
+      "kind": "reference",
+      "target": "$.vertices"
+    },
+    {
+      "path": "walls.*.b",
+      "kind": "reference",
+      "target": "$.vertices"
+    },
+    {
+      "path": "openings.*.wall",
+      "kind": "reference",
+      "target": "$.walls"
+    },
+    {
+      "path": "assets.*.room",
+      "kind": "reference",
+      "target": "$.rooms"
+    },
+    {
+      "path": "assets.*.faces",
+      "kind": "reference",
+      "target": "$.walls"
+    },
+    {
+      "path": "assets.*.faces",
+      "kind": "requires",
+      "target": "room"
+    },
+    {
+      "path": "assets.*.fromPhoto",
+      "kind": "reference",
+      "target": "$.assets",
+      "assetKinds": [
+        "photo"
+      ]
+    },
+    {
+      "path": "rooms.*.dressing.panorama",
+      "kind": "reference",
+      "target": "$.assets",
+      "assetKinds": [
+        "panorama"
+      ]
+    },
+    {
+      "path": "rooms.*.dressing.level",
+      "kind": "requires",
+      "target": "floor",
+      "when": {
+        "path": "level",
+        "equals": 1
+      }
+    },
+    {
+      "path": "rooms.*.dressing.level",
+      "kind": "requires",
+      "target": "floor",
+      "when": {
+        "path": "level",
+        "equals": 2
+      }
+    },
+    {
+      "path": "rooms.*.dressing.level",
+      "kind": "requires",
+      "target": "panorama",
+      "when": {
+        "path": "level",
+        "equals": 2
+      }
+    },
+    {
+      "path": "rooms.*.dressing.level",
+      "kind": "forbids",
+      "target": "panorama",
+      "when": {
+        "path": "level",
+        "equals": 0
+      }
+    },
+    {
+      "path": "rooms.*.dressing.level",
+      "kind": "forbids",
+      "target": "panorama",
+      "when": {
+        "path": "level",
+        "equals": 1
+      }
+    },
+    {
+      "path": "rooms.*.dressing.yaw",
+      "kind": "requires",
+      "target": "yawFor"
+    },
+    {
+      "path": "rooms.*.dressing.yawFor",
+      "kind": "requires",
+      "target": "yaw"
+    }
+  ],
+  "dressingMetaPairs": [
+    "floor",
+    "wallTone",
+    "panorama",
+    "yaw"
+  ],
+  "reportRules": [
+    "unique-checkIds",
+    "unique-reviewIds",
+    "fix-target"
+  ],
+  "revisionRules": [
+    "complete-ordered-history"
+  ]
+}

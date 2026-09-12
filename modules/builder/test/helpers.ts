@@ -1,4 +1,4 @@
-import type { FlatModel, Meta } from '@flatwalk/contract';
+import { SCHEMA_VERSION, type FlatModel, type Meta } from '@flatwalk/contract';
 
 export const META: Meta = { provenance: 'builder-test@0.1', basis: 'inferred' };
 
@@ -11,7 +11,7 @@ const defaultMeta = {
 
 export function baseModel(over: Partial<FlatModel> & Pick<FlatModel, 'vertices' | 'walls' | 'rooms'>): FlatModel {
   return {
-    schemaVersion: '0.1',
+    schemaVersion: SCHEMA_VERSION,
     id: 'builder-synth',
     revision: 1,
     source: { site: 'manual', fetchedAt: '2026-09-12T10:00:00Z' },
@@ -69,6 +69,34 @@ export function oneRoom() {
     },
     rooms: {
       r1: room([2, 1.5]),
+    },
+  });
+}
+
+/** Two 4×3 m rooms sharing interior wall w25 from (4,0) to (4,3). */
+export function twoRooms(openings: FlatModel['openings'] = {}) {
+  return baseModel({
+    vertices: {
+      v1: [0, 0],
+      v2: [4, 0],
+      v3: [8, 0],
+      v4: [8, 3],
+      v5: [4, 3],
+      v6: [0, 3],
+    },
+    walls: {
+      w12: wall('v1', 'v2', 0.2, true),
+      w23: wall('v2', 'v3', 0.2, true),
+      w34: wall('v3', 'v4', 0.2, true),
+      w45: wall('v4', 'v5', 0.2, true),
+      w56: wall('v5', 'v6', 0.2, true),
+      w61: wall('v6', 'v1', 0.2, true),
+      w25: wall('v2', 'v5', 0.2, false),
+    },
+    openings,
+    rooms: {
+      left: room([2, 1.5], 'living', 'Left'),
+      right: room([6, 1.5], 'bedroom', 'Right'),
     },
   });
 }

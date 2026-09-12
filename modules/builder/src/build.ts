@@ -22,6 +22,7 @@ export function build(model: FlatModel, options: BuildOptions = {}): THREE.Group
 }
 
 export function buildScene(model: FlatModel, options: BuildOptions = {}): BuiltScene {
+  // Public FlatModelSchema (refs + semantic rules). JSON Schema alone is not the contract gate.
   const parsed = validateFlatModel(model);
   if (!parsed.success) {
     throw new BuilderError(

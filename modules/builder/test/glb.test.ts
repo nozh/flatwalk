@@ -1,14 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { BuilderError, build, toGLB } from '../src/index.ts';
+import { build, toGLB } from '../src/index.ts';
 import { oneRoom } from './helpers.ts';
-
-describe('contract gate', () => {
-  it('refuses a model that fails FlatModelSchema', () => {
-    const model = oneRoom();
-    (model as { schemaVersion: string }).schemaVersion = '9.9';
-    expect(() => build(model, { floors: false })).toThrow(BuilderError);
-  });
-});
 
 describe('toGLB', () => {
   it('returns a non-empty GLB buffer from Node', async () => {

@@ -8,7 +8,6 @@ export default defineConfig({
   root,
   resolve: {
     alias: {
-      '@flatwalk/contract': path.resolve(root, '../contract/src/index.ts'),
       '@flatwalk/geometry': path.resolve(root, '../geometry/src/index.ts'),
     },
   },

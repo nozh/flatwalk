@@ -28,24 +28,24 @@ function outcome(checks: Check[], id: string): Outcome {
   return { status: 'unverified', messages: [] };
 }
 
-const UNCHECKED = 'Связность комнат и ширина проходов не проверены.';
+const UNCHECKED = 'Room connectivity and clearance have not been verified.';
 
 function line(subject: string, done: string, failed: string, result: Outcome): string {
   switch (result.status) {
     case 'pass': return `${subject}: ${done}.`;
     case 'fail': return `${subject}: ${failed}.${result.messages.length ? ` ${result.messages.join(' ')}` : ''}`;
-    case 'skipped': return `${subject}: не проверен${subject.endsWith('а') || subject.endsWith('ов') ? 'а' : ''} (пропущено).`;
-    default: return `${subject}: не проверен${subject.endsWith('а') || subject.endsWith('ов') ? 'а' : ''}.`;
+    case 'skipped': return `${subject}: not verified (skipped).`;
+    default: return `${subject}: not verified.`;
   }
 }
 
 export function walkVerification(report: ReportResult): WalkVerification {
-  if (report.status === 'missing') return { level: 'none', headline: `Отчёта Validator нет. ${UNCHECKED}`, lines: [] };
+  if (report.status === 'missing') return { level: 'none', headline: `No Validator report. ${UNCHECKED}`, lines: [] };
   if (report.status === 'stale') {
-    return { level: 'none', headline: `Отчёт проверки относится к другой модели или ревизии. ${UNCHECKED}`, lines: [] };
+    return { level: 'none', headline: `The validation report belongs to a different model or revision. ${UNCHECKED}`, lines: [] };
   }
   if (report.status === 'invalid') {
-    return { level: 'none', headline: `Отчёт проверки не соответствует контракту и не учитывается. ${UNCHECKED}`, lines: [] };
+    return { level: 'none', headline: `The validation report does not match the contract and is ignored. ${UNCHECKED}`, lines: [] };
   }
 
   const { checks, walkReady } = report.report;
@@ -54,29 +54,29 @@ export function walkVerification(report: ReportResult): WalkVerification {
   const clearance = outcome(checks, 'navigation.clearance');
 
   const lines = [
-    line('Связность комнат', 'проверена', 'не пройдена', reachable),
-    line('Старт от входа', 'проверен', 'не пройден', start),
-    clearance.status === 'pass' ? 'Ширина проходов: проверена.'
-      : clearance.status === 'fail' ? `Ширина проходов: недостаточна.${clearance.messages.length ? ` ${clearance.messages.join(' ')}` : ''}`
-        : clearance.status === 'skipped' ? 'Ширина проходов: не проверена (пропущено).'
-          : 'Ширина проходов: не проверена.',
+    line('Room connectivity', 'verified', 'failed', reachable),
+    line('Entrance start', 'verified', 'failed', start),
+    clearance.status === 'pass' ? 'Clearance: verified.'
+      : clearance.status === 'fail' ? `Clearance: insufficient.${clearance.messages.length ? ` ${clearance.messages.join(' ')}` : ''}`
+        : clearance.status === 'skipped' ? 'Clearance: not verified (skipped).'
+          : 'Clearance: not verified.',
   ];
 
-  const clearanceWord = clearance.status === 'pass' ? 'проверена' : clearance.status === 'fail' ? 'недостаточна' : 'не проверена';
+  const clearanceWord = clearance.status === 'pass' ? 'verified' : clearance.status === 'fail' ? 'insufficient' : 'not verified';
   const graphOk = reachable.status === 'pass' && start.status === 'pass' && walkReady;
 
   if (graphOk && clearance.status === 'pass') {
-    return { level: 'ready', headline: 'Связность комнат и ширина проходов проверены. Прогулка готова.', lines };
+    return { level: 'ready', headline: 'Room connectivity and clearance are verified. The walkthrough is ready.', lines };
   }
   if (graphOk && clearance.status !== 'fail') {
-    return { level: 'trial', headline: `Связность комнат проверена. Ширина проходов ${clearanceWord}.`, lines };
+    return { level: 'trial', headline: `Room connectivity is verified. Clearance is ${clearanceWord}.`, lines };
   }
 
-  const reason = reachable.status === 'fail' ? 'связность комнат не пройдена'
-    : reachable.status !== 'pass' ? 'связность комнат не проверена'
-      : start.status === 'fail' ? 'старт от входа не пройден'
-        : start.status !== 'pass' ? 'старт от входа не проверен'
-          : clearance.status === 'fail' ? 'ширина проходов недостаточна'
-            : 'проверки геометрии не пройдены';
-  return { level: 'not-ready', headline: `Геометрия не подтверждена: ${reason}. Ширина проходов ${clearanceWord}.`, lines };
+  const reason = reachable.status === 'fail' ? 'room connectivity failed'
+    : reachable.status !== 'pass' ? 'room connectivity is not verified'
+      : start.status === 'fail' ? 'the entrance start failed'
+        : start.status !== 'pass' ? 'the entrance start is not verified'
+          : clearance.status === 'fail' ? 'clearance is insufficient'
+            : 'geometry checks failed';
+  return { level: 'not-ready', headline: `Geometry is not confirmed: ${reason}. Clearance is ${clearanceWord}.`, lines };
 }

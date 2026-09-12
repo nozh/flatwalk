@@ -52,7 +52,7 @@ export function mountWalkScene(host: HTMLElement, model: FlatModel, prep: WalkPr
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.domElement.tabIndex = 0;
-  renderer.domElement.setAttribute('aria-label', 'Интерактивная 3D-модель квартиры. В прогулке: WASD или стрелки — движение, потяните мышью — осмотр.');
+  renderer.domElement.setAttribute('aria-label', 'Interactive 3D apartment model. In walkthrough mode, use WASD or the arrow keys to move and drag to look around.');
   host.prepend(renderer.domElement);
 
   scene.add(new THREE.HemisphereLight(0xf5f6ff, 0xae997d, 2.0));
@@ -116,7 +116,7 @@ export function mountWalkScene(host: HTMLElement, model: FlatModel, prep: WalkPr
     button.type = 'button';
     button.className = 'room-label';
     button.textContent = room.label;
-    button.title = walk.available ? `Войти: ${room.label}` : room.label;
+    button.title = walk.available ? `Enter: ${room.label}` : room.label;
     button.addEventListener('click', () => hooks.onLabel?.(roomId));
     labelLayer.append(button);
     return { roomId, anchor: room.anchor, button };

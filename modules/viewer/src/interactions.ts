@@ -125,12 +125,12 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: Listing
     const photo = shown.set[shown.index];
     if (!photo) return;
     lightboxImage.src = photo.url;
-    lightboxImage.alt = photo.roomLabel ? `Фото ${photo.number}, ${photo.roomLabel}` : `Фото ${photo.number}`;
+    lightboxImage.alt = photo.roomLabel ? `Photo ${photo.number}, ${photo.roomLabel}` : `Photo ${photo.number}`;
     const parts = shown.scope
-      ? [`${shown.scope}, ${shown.index + 1} из ${shown.set.length}`, `фото ${photo.number}`]
-      : [`Фото ${photo.number} из ${shown.set.length}`, ...(photo.roomLabel ? [photo.roomLabel] : [])];
+      ? [`${shown.scope}, ${shown.index + 1} of ${shown.set.length}`, `photo ${photo.number}`]
+      : [`Photo ${photo.number} of ${shown.set.length}`, ...(photo.roomLabel ? [photo.roomLabel] : [])];
     if (photo.lookLabel) parts.push(photo.lookLabel);
-    const question = photo.question ? ` Вопрос модели: ${photo.question}` : '';
+    const question = photo.question ? ` Model question: ${photo.question}` : '';
     lightboxCaption.textContent = `${parts.join(', ')}.${question}`;
     for (const button of lightbox?.querySelectorAll<HTMLButtonElement>('.lightbox-nav') ?? []) button.disabled = shown.set.length < 2;
   }
@@ -160,9 +160,9 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: Listing
   const hooks: SceneHooks = {
     onRoom(roomId) {
       const room = roomId ? view.rooms.find((item) => item.id === roomId) : undefined;
-      if (hudRoom) hudRoom.textContent = room ? room.label : 'Вне помещений';
+      if (hudRoom) hudRoom.textContent = room ? room.label : 'Outside rooms';
       const area = roomId && prep?.walk.areas?.rooms[roomId];
-      if (hudArea) hudArea.textContent = area ? `≈ ${formatArea(area)} по модели` : '';
+      if (hudArea) hudArea.textContent = area ? `≈ ${formatArea(area)} in the model` : '';
       if (room && selected !== room.id) select(room.id);
     },
     onLabel(roomId) {
@@ -190,7 +190,7 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: Listing
       button.setAttribute('aria-pressed', String(button.dataset.view === next));
     }
     const label = walkButton?.querySelector('.walk-label');
-    if (label) label.textContent = next === 'walk' ? 'Выйти из прогулки' : (walkButton?.dataset.label ?? 'Прогулка');
+    if (label) label.textContent = next === 'walk' ? 'Exit walkthrough' : (walkButton?.dataset.label ?? 'Walkthrough');
     if (stageStatus) stageStatus.textContent = renderStageStatus(next, overlayMode, prep, undefined, deps.report);
   }
 
@@ -229,7 +229,7 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: Listing
     if (!controller) return;
     showView('walk');
     if (controller.enterRoom(roomId)) focusCanvas();
-    else { showView(lastSceneView); notify('В этой комнате негде встать: контур не найден'); }
+    else { showView(lastSceneView); notify('No valid standing point was found in this room'); }
   }
 
   function toggleMarks(button: HTMLButtonElement): void {
@@ -243,13 +243,13 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: Listing
       if (document.fullscreenElement) await document.exitFullscreen();
       else if (stage) await stage.requestFullscreen();
     } catch {
-      notify('Полноэкранный режим недоступен в этом браузере');
+      notify('Full-screen mode is unavailable in this browser');
     }
   }
 
   async function lockMouse(): Promise<void> {
     const controller = ensureScene();
-    if (!controller || !(await controller.lockMouse())) notify('Потяните по 3D-сцене, чтобы осмотреться');
+    if (!controller || !(await controller.lockMouse())) notify('Drag on the 3D scene to look around');
   }
 
   function photoIndexIn(set: PhotoView[], id: string): number {

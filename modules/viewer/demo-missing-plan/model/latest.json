@@ -84,7 +84,7 @@
         1.5
       ],
       "type": "kitchen",
-      "label": "Кухня",
+      "label": "Kitchen",
       "meta": {
         "provenance": "viewer-test@0.1",
         "basis": "inferred"
@@ -96,7 +96,7 @@
         1.5
       ],
       "type": "living",
-      "label": "Гостиная",
+      "label": "Living room",
       "meta": {
         "provenance": "viewer-test@0.1",
         "basis": "inferred"

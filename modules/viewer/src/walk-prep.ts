@@ -17,22 +17,22 @@ export type WalkPrep = {
 };
 
 const GEOMETRY_REASONS: Record<string, string> = {
-  'invalid-start': 'вход не определён или старт попадает в стену',
-  nonplanar: 'граф стен не планарен',
-  'ambiguous-mapping': 'точка попадает в несколько помещений',
-  'missing-room': 'помещение не найдено',
-  'wall-not-on-room': 'стена не лежит на контуре помещения',
+  'invalid-start': 'the entrance is undefined or the start point intersects a wall',
+  nonplanar: 'the wall graph is not planar',
+  'ambiguous-mapping': 'the point belongs to multiple rooms',
+  'missing-room': 'room not found',
+  'wall-not-on-room': 'the wall is not on the room boundary',
 };
 
 function describeError(error: unknown): string {
   if (error instanceof GeometryError) return GEOMETRY_REASONS[error.code] ?? error.message;
-  if (error instanceof BuilderError) return `Builder отказался собирать модель (${error.message})`;
+  if (error instanceof BuilderError) return `Builder rejected the model (${error.message})`;
   return error instanceof Error ? error.message : String(error);
 }
 
 export function prepareWalk(model: FlatModel): WalkPrep {
   const diagnostics: string[] = [];
-  const labels = (ids: string[]) => ids.map((id) => model.rooms[id]?.label ?? 'без названия').join(', ');
+  const labels = (ids: string[]) => ids.map((id) => model.rooms[id]?.label ?? 'unnamed').join(', ');
 
   let scene: BuiltScene | null = null;
   let sceneError: string | null = null;
@@ -40,14 +40,14 @@ export function prepareWalk(model: FlatModel): WalkPrep {
     scene = buildScene(model);
   } catch (error) {
     sceneError = describeError(error);
-    diagnostics.push(`3D-сцена не собрана: ${sceneError}.`);
+    diagnostics.push(`The 3D scene was not built: ${sceneError}.`);
   }
 
   const polygons = roomPolygons(model, roomPolygon);
   const roomIds = Object.keys(model.rooms);
   const withPolygon = roomIds.filter((id) => polygons[id]);
   const without = roomIds.filter((id) => !polygons[id]);
-  diagnostics.push(`Контуры помещений по Geometry Core: ${withPolygon.length} из ${roomIds.length}.${without.length ? ` Без контура: ${labels(without)}.` : ''}`);
+  diagnostics.push(`Room boundaries from Geometry Core: ${withPolygon.length} of ${roomIds.length}.${without.length ? ` Missing boundaries: ${labels(without)}.` : ''}`);
 
   let segments: CollisionSegment[] = [];
   let segmentsError: string | null = null;
@@ -56,34 +56,34 @@ export function prepareWalk(model: FlatModel): WalkPrep {
   } catch (error) {
     segmentsError = describeError(error);
   }
-  if (segmentsError) diagnostics.push(`Коллизии не вычислены: ${segmentsError}.`);
-  else diagnostics.push(`${countLabel(segments.length, ['отрезок коллизий', 'отрезка коллизий', 'отрезков коллизий'])}, радиус игрока ${PLAYER_RADIUS} м.`);
+  if (segmentsError) diagnostics.push(`Collision geometry was not computed: ${segmentsError}.`);
+  else diagnostics.push(`${countLabel(segments.length, ['collision segment', 'collision segments', 'collision segments'])}, player radius ${PLAYER_RADIUS} m.`);
 
   let computedAreas: Areas | null = null;
   try {
     computedAreas = areas(model);
     const declared = model.flat.areaDeclared;
     diagnostics.push(declared !== undefined
-      ? `Площадь по модели ${formatArea(computedAreas.areaComputed)} при ${formatArea(declared)} по объявлению.`
-      : `Площадь по модели ${formatArea(computedAreas.areaComputed)}.`);
+      ? `Model area ${formatArea(computedAreas.areaComputed)} versus ${formatArea(declared)} in the listing.`
+      : `Model area ${formatArea(computedAreas.areaComputed)}.`);
   } catch (error) {
-    diagnostics.push(`Площади не вычислены: ${describeError(error)}.`);
+    diagnostics.push(`Areas were not computed: ${describeError(error)}.`);
   }
 
   let start: StartPoint | null = null;
   let startError: string | null = null;
   try {
     start = startPoint(model);
-    if (!canStand(start.point, segments, PLAYER_RADIUS)) startError = 'старт от входа упирается в стену';
+    if (!canStand(start.point, segments, PLAYER_RADIUS)) startError = 'the entrance start point intersects a wall';
   } catch (error) {
     startError = describeError(error);
   }
 
   if (start && !startError && !segmentsError) {
-    diagnostics.push('Старт от входа найден, прогулка доступна.');
+    diagnostics.push('The entrance start point was found; walkthrough is available.');
     return { scene, sceneError, walk: { available: true, start, segments, polygons, areas: computedAreas }, diagnostics };
   }
-  const reason = startError ?? segmentsError ?? 'геометрия недоступна';
-  diagnostics.push(`Прогулка недоступна: ${reason}.`);
+  const reason = startError ?? segmentsError ?? 'geometry is unavailable';
+  diagnostics.push(`Walkthrough unavailable: ${reason}.`);
   return { scene, sceneError, walk: { available: false, reason, segments, polygons, areas: computedAreas }, diagnostics };
 }

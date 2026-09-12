@@ -1,41 +1,41 @@
 /** Human wording for contract enums and provenance strings. Unknown values pass through verbatim. */
 
 const ROOM_TYPES: Record<string, string> = {
-  living: 'жилая комната',
-  bedroom: 'спальня',
-  kitchen: 'кухня',
-  bathroom: 'ванная',
-  wc: 'санузел',
-  hall: 'холл',
-  corridor: 'коридор',
-  storage: 'кладовая',
-  unknown: 'тип не определён',
+  living: 'living room',
+  bedroom: 'bedroom',
+  kitchen: 'kitchen',
+  bathroom: 'bathroom',
+  wc: 'toilet',
+  hall: 'hall',
+  corridor: 'corridor',
+  storage: 'storage',
+  unknown: 'room type unknown',
 };
 
 const BASIS: Record<string, string> = {
-  declared: 'по объявлению',
-  inferred: 'выведено из плана',
-  assumed: 'принято по умолчанию',
-  'declared-area': 'подобран по заявленной площади',
+  declared: 'from the listing',
+  inferred: 'inferred from the floor plan',
+  assumed: 'default assumption',
+  'declared-area': 'fitted to the listed area',
 };
 
 const PROVENANCE: [RegExp, string][] = [
-  [/^fixture\/manual/, 'ручная разметка эталона'],
-  [/^plan-parser\/opencv/, 'распознавание плана (OpenCV)'],
-  [/^plan-parser\/grok-rects/, 'схема плана прямоугольниками (Grok)'],
-  [/^plan-parser\/grok/, 'семантика плана (Grok)'],
-  [/^photo-matcher/, 'сопоставление фото (Grok)'],
-  [/^dresser/, 'отделка (Dresser)'],
-  [/^importer/, 'импорт объявления'],
-  [/^validator/, 'авторемонт Validator'],
-  [/^editor/, 'правка в редакторе'],
-  [/^human$/, 'правка человека'],
-  [/^viewer-test/, 'тестовые данные Viewer'],
+  [/^fixture\/manual/, 'manual reference markup'],
+  [/^plan-parser\/opencv/, 'floor-plan recognition (OpenCV)'],
+  [/^plan-parser\/grok-rects/, 'rectangular floor-plan layout (Grok)'],
+  [/^plan-parser\/grok/, 'floor-plan semantics (Grok)'],
+  [/^photo-matcher/, 'photo matching (Grok)'],
+  [/^dresser/, 'interior finish (Dresser)'],
+  [/^importer/, 'listing import'],
+  [/^validator/, 'Validator auto-repair'],
+  [/^editor/, 'editor change'],
+  [/^human$/, 'human change'],
+  [/^viewer-test/, 'Viewer test data'],
 ];
 
 const SITES: Record<string, string> = {
   cityexpert: 'CityExpert',
-  manual: 'ручная загрузка',
+  manual: 'manual upload',
 };
 
 export function roomTypeLabel(type: string): string {
@@ -55,14 +55,14 @@ export function siteLabel(site: string): string {
   return SITES[site] ?? site;
 }
 
-const number = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
+const number = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
 
 export function formatArea(value: number): string {
-  return `${number.format(value)} м²`;
+  return `${number.format(value)} m²`;
 }
 
 export function formatMeters(value: number): string {
-  return `${number.format(value)} м`;
+  return `${number.format(value)} m`;
 }
 
 export function formatPercent(value: number): string {
@@ -72,15 +72,11 @@ export function formatPercent(value: number): string {
 export function formatDate(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
-  return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(date).replace(/\s*г\.$/, '');
+  return new Intl.DateTimeFormat('en-US', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(date);
 }
 
 export function pluralize(count: number, forms: [string, string, string]): string {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (mod10 === 1 && mod100 !== 11) return forms[0];
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return forms[1];
-  return forms[2];
+  return count === 1 ? forms[0] : forms[2];
 }
 
 export function countLabel(count: number, forms: [string, string, string]): string {

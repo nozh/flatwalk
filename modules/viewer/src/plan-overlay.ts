@@ -138,7 +138,7 @@ export function renderOverlaySvg(overlay: Overlay, options: OverlayOptions = {})
     ? (() => {
       const mx = (entrance.x1 + entrance.x2) / 2;
       const my = (entrance.y1 + entrance.y2) / 2;
-      return `<g class="overlay-entrance" transform="translate(${round(mx)} ${round(my)})"><circle r="${round(pin * 0.9)}" stroke-width="${ring}" /><text y="${round(pin * 2.4)}" font-size="${round(labelSize * 0.85)}" stroke-width="${halo}" text-anchor="middle">вход</text></g>`;
+      return `<g class="overlay-entrance" transform="translate(${round(mx)} ${round(my)})"><circle r="${round(pin * 0.9)}" stroke-width="${ring}" /><text y="${round(pin * 2.4)}" font-size="${round(labelSize * 0.85)}" stroke-width="${halo}" text-anchor="middle">entrance</text></g>`;
     })()
     : '';
 
@@ -151,7 +151,7 @@ export function renderOverlaySvg(overlay: Overlay, options: OverlayOptions = {})
       + `</g>`;
   }).join('');
 
-  return `<svg class="plan-overlay is-${overlay.mode}" viewBox="${vx} ${vy} ${vw} ${vh}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="План квартиры с разметкой из модели">`
+  return `<svg class="plan-overlay is-${overlay.mode}" viewBox="${vx} ${vy} ${vw} ${vh}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Apartment floor plan with model overlay">`
     + image
     + `<g class="overlay-marks">${walls}${openings}${entranceMark}${rooms}</g>`
     + `</svg>`;

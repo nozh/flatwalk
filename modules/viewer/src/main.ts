@@ -1,6 +1,6 @@
 import './style.css';
 import { mountDemoEntry } from './demo-entry';
-import { dataSourceFromSearch } from './source';
+import { parseViewerQuery, publicDemoEnabled } from './demo-flags';
 import { loadFlatModel } from './load-model';
 import { loadValidationReport } from './load-report';
 import { renderShell, type ViewerState } from './shell';
@@ -52,27 +52,32 @@ function safePrepareWalk(model: Parameters<typeof prepareWalk>[0]): WalkPrep {
       scene: null,
       sceneError: reason,
       walk: { available: false, reason, segments: [], polygons: {}, areas: null },
-      diagnostics: [`Builder или Geometry Core завершились ошибкой: ${reason}.`],
+      diagnostics: [`Builder or Geometry Core failed: ${reason}.`],
     };
   }
 }
 
 async function boot(): Promise<void> {
-  const source = dataSourceFromSearch(window.location.search);
-  paint({ kind: 'loading' });
+  const query = parseViewerQuery(window.location.search, publicDemoEnabled());
+  if (query.rewriteSearch) {
+    const url = new URL(window.location.href);
+    window.history.replaceState(null, '', `${url.pathname}${query.rewriteSearch}${url.hash}`);
+  }
+  const { source, demo } = query;
+  paint({ kind: 'loading', demo });
   let result;
   try {
     result = await loadFlatModel(source);
   } catch {
-    paint({ kind: 'missing', source, url: source.kind === 'fixture' ? '/fixtures/54541/flat.model.json' : '/model/latest.json' });
+    paint({ kind: 'missing', source, demo, url: source.kind === 'fixture' ? '/fixtures/54541/flat.model.json' : '/model/latest.json' });
     return;
   }
   if (result.status === 'missing') {
-    paint({ kind: 'missing', source: result.source, url: result.url });
+    paint({ kind: 'missing', source: result.source, demo, url: result.url });
     return;
   }
   if (result.status === 'invalid') {
-    paint({ kind: 'invalid', issues: result.issues });
+    paint({ kind: 'invalid', issues: result.issues, demo });
     return;
   }
   const view = listingView(result.model, result.source);
@@ -87,6 +92,7 @@ async function boot(): Promise<void> {
     plan: { status: planOk ? 'ok' : 'unavailable' },
     report,
     prep: safePrepareWalk(result.model),
+    demo,
   });
 }
 
@@ -98,7 +104,7 @@ async function openPublicDemo(): Promise<void> {
   root.querySelector<HTMLButtonElement>('[data-view="scene"]')?.click();
 }
 
-if (import.meta.env.VITE_PUBLIC_DEMO === 'true' && !new URLSearchParams(window.location.search).has('src')) {
+if (publicDemoEnabled() && !new URLSearchParams(window.location.search).has('src')) {
   mountDemoEntry(root, openPublicDemo);
 } else {
   void boot();

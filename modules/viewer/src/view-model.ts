@@ -65,13 +65,20 @@ export type ListingView = {
   hasGeometry: boolean;
 };
 
-const FLOOR: Record<string, string> = { parquet: 'паркет', tile: 'плитка', laminate: 'ламинат', unknown: 'пол не определён' };
-const TONE: Record<string, string> = { light: 'светлые стены', dark: 'тёмные стены', colored: 'цветные стены' };
+const FLOOR: Record<string, string> = { parquet: 'parquet', tile: 'tile', laminate: 'laminate', unknown: 'flooring unknown' };
+const TONE: Record<string, string> = { light: 'light walls', dark: 'dark walls', colored: 'colored walls' };
+const MODEL_TEXT: Record<string, string> = {
+  'Гостиная': 'Living room', 'Столовая и вход': 'Dining area and entrance', 'Кухня': 'Kitchen',
+  'Спальня': 'Bedroom', 'Ванная': 'Bathroom', 'Коридор': 'Corridor', 'Душевая': 'Shower room',
+  'Холл': 'Hall', 'Спальня с террасой': 'Bedroom with terrace', 'Спальня с рабочим местом': 'Bedroom with workspace',
+  'узкий коридор между спальней, ванной, лоджией и столовой; фотографий нет': 'narrow corridor between the bedroom, bathroom, loggia, and dining area; no photos are available',
+};
+const modelText = (value: string): string => MODEL_TEXT[value] ?? value;
 const DEFAULTS: { key: 'wallHeight' | 'doorHeight' | 'windowSill' | 'windowHeight'; subject: string }[] = [
-  { key: 'wallHeight', subject: 'Высота потолка' },
-  { key: 'doorHeight', subject: 'Высота дверей' },
-  { key: 'windowSill', subject: 'Подоконник' },
-  { key: 'windowHeight', subject: 'Высота окон' },
+  { key: 'wallHeight', subject: 'Ceiling height' },
+  { key: 'doorHeight', subject: 'Door height' },
+  { key: 'windowSill', subject: 'Window sill' },
+  { key: 'windowHeight', subject: 'Window height' },
 ];
 
 export function byNumericId(a: string, b: string): number {
@@ -79,8 +86,8 @@ export function byNumericId(a: string, b: string): number {
 }
 
 function openingSubject(kind: string, entrance: boolean | undefined): string {
-  if (entrance) return 'Проём: входная дверь';
-  return kind === 'window' ? 'Проём: окно' : 'Проём: дверь';
+  if (entrance) return 'Opening: entrance door';
+  return kind === 'window' ? 'Opening: window' : 'Opening: door';
 }
 
 export function listingView(model: FlatModel, source: DataSource): ListingView {
@@ -100,7 +107,7 @@ export function listingView(model: FlatModel, source: DataSource): ListingView {
       width: asset.width,
       height: asset.height,
       roomId: asset.room && room ? asset.room : null,
-      roomLabel: room?.label ?? null,
+      roomLabel: room ? modelText(room.label) : null,
       faces: asset.faces ?? null,
       ...(look ? { lookLabel: look } : {}),
       ...(asset.meta.confidence !== undefined ? { confidence: asset.meta.confidence } : {}),
@@ -112,7 +119,7 @@ export function listingView(model: FlatModel, source: DataSource): ListingView {
     .sort(([a], [b]) => byNumericId(a, b))
     .map(([id, room]) => ({
       id,
-      label: room.label,
+      label: modelText(room.label),
       type: room.type,
       typeLabel: roomTypeLabel(room.type),
       photoIds: photos.filter((photo) => photo.roomId === id).map((photo) => photo.id),
@@ -120,7 +127,7 @@ export function listingView(model: FlatModel, source: DataSource): ListingView {
       provenanceLabel: provenanceLabel(room.meta.provenance),
       ...(room.meta.confidence !== undefined ? { confidence: room.meta.confidence } : {}),
       reviewed: room.meta.reviewed === true,
-      ...(room.meta.question ? { question: room.meta.question } : {}),
+      ...(room.meta.question ? { question: modelText(room.meta.question) } : {}),
     }));
 
   const planId = model.plan.asset;
@@ -129,18 +136,18 @@ export function listingView(model: FlatModel, source: DataSource): ListingView {
   const planUrl = planImage ? resolveAssetUrl(source, planImage.url) : null;
 
   const questions: Question[] = [];
-  for (const room of rooms) if (room.question) questions.push({ subject: `Помещение «${room.label}»`, text: room.question, roomId: room.id });
+  for (const room of rooms) if (room.question) questions.push({ subject: `Room “${room.label}”`, text: room.question, roomId: room.id });
   for (const [, opening] of Object.entries(model.openings).sort(([a], [b]) => byNumericId(a, b))) {
     if (opening.meta.question) {
       questions.push({ subject: openingSubject(opening.kind, opening.kind === 'door' ? opening.entrance : undefined), text: opening.meta.question });
     }
   }
   for (const [, wall] of Object.entries(model.walls).sort(([a], [b]) => byNumericId(a, b))) {
-    if (wall.meta.question) questions.push({ subject: wall.exterior ? 'Наружная стена' : 'Стена', text: wall.meta.question });
+    if (wall.meta.question) questions.push({ subject: wall.exterior ? 'Exterior wall' : 'Wall', text: wall.meta.question });
   }
-  for (const photo of photos) if (photo.question) questions.push({ subject: `Фото ${photo.number}`, text: photo.question, photoId: photo.id });
-  if (model.plan.meta.question) questions.push({ subject: 'Масштаб плана', text: model.plan.meta.question });
-  if (model.flat.meta.question) questions.push({ subject: 'Квартира', text: model.flat.meta.question });
+  for (const photo of photos) if (photo.question) questions.push({ subject: `Photo ${photo.number}`, text: photo.question, photoId: photo.id });
+  if (model.plan.meta.question) questions.push({ subject: 'Floor-plan scale', text: model.plan.meta.question });
+  if (model.flat.meta.question) questions.push({ subject: 'Apartment', text: model.flat.meta.question });
 
   const assumptions: Assumption[] = DEFAULTS.map(({ key, subject }) => {
     const meta: Meta = model.flat.defaults.meta[key];
@@ -167,7 +174,7 @@ export function listingView(model: FlatModel, source: DataSource): ListingView {
   return {
     id: model.id,
     revision: model.revision,
-    title: area !== undefined ? `Квартира ${formatArea(area)}` : 'Квартира',
+    title: area !== undefined ? `Apartment ${formatArea(area)}` : 'Apartment',
     source: {
       site: model.source.site,
       siteLabel: siteLabel(model.source.site),

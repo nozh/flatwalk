@@ -9,7 +9,7 @@ import { escapeHtml, icon } from './html';
 
 export type Selection = 'all' | string;
 
-const number = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
+const number = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
 
 /** Photos shown for a selection: the whole gallery for the flat, bound photos for a room. */
 export function photosFor(view: ListingView, selected: Selection): PhotoView[] {
@@ -23,7 +23,7 @@ export function facedWalls(view: ListingView, selected: Selection): string[] {
 }
 
 function photoAlt(photo: PhotoView): string {
-  return photo.roomLabel ? `Фото ${photo.number}, ${photo.roomLabel}` : `Фото ${photo.number}`;
+  return photo.roomLabel ? `Photo ${photo.number}, ${photo.roomLabel}` : `Photo ${photo.number}`;
 }
 
 function facesAttr(photo: PhotoView): string {
@@ -33,14 +33,14 @@ function facesAttr(photo: PhotoView): string {
 /** Grid of photos; every thumbnail opens the lightbox. */
 function renderThumbGrid(photos: PhotoView[]): string {
   return `<div class="thumbs is-grid">${photos.map((photo) => `
-    <button type="button" class="thumb" data-photo="${escapeHtml(photo.id)}"${facesAttr(photo)} aria-label="Открыть ${escapeHtml(photoAlt(photo).toLowerCase())}">
+    <button type="button" class="thumb" data-photo="${escapeHtml(photo.id)}"${facesAttr(photo)} aria-label="Open ${escapeHtml(photoAlt(photo).toLowerCase())}">
       <img src="${escapeHtml(photo.url)}" alt="${escapeHtml(photoAlt(photo))}" width="${photo.width}" height="${photo.height}" loading="lazy" decoding="async" />
       <span class="thumb-number">${photo.number}</span>
     </button>`).join('')}</div>`;
 }
 
 export function galleryCaption(photo: PhotoView): string {
-  const parts = [`Фото ${photo.number}`];
+  const parts = [`Photo ${photo.number}`];
   if (photo.lookLabel) parts.push(photo.lookLabel);
   return parts.join(', ');
 }
@@ -50,10 +50,10 @@ export function renderGallery(photos: PhotoView[], index: number): string {
   const photo = photos[index];
   if (!photo) return '';
   const thumbs = photos.map((item, i) => `
-    <button type="button" class="thumb is-picker" data-photo="${escapeHtml(item.id)}"${facesAttr(item)} aria-pressed="${i === index}" aria-label="Показать ${escapeHtml(photoAlt(item).toLowerCase())}">
+    <button type="button" class="thumb is-picker" data-photo="${escapeHtml(item.id)}"${facesAttr(item)} aria-pressed="${i === index}" aria-label="Show ${escapeHtml(photoAlt(item).toLowerCase())}">
       <img src="${escapeHtml(item.url)}" alt="" width="${item.width}" height="${item.height}" loading="lazy" decoding="async" />
     </button>`).join('');
-  return `<button type="button" class="photo-main" data-photo="${escapeHtml(photo.id)}"${facesAttr(photo)} aria-label="Открыть ${escapeHtml(photoAlt(photo).toLowerCase())} крупно">
+  return `<button type="button" class="photo-main" data-photo="${escapeHtml(photo.id)}"${facesAttr(photo)} aria-label="Open ${escapeHtml(photoAlt(photo).toLowerCase())} full size">
       <img id="gallery-image" src="${escapeHtml(photo.url)}" alt="${escapeHtml(photoAlt(photo))}" width="${photo.width}" height="${photo.height}" decoding="async" />
       <span class="photo-zoom" aria-hidden="true">${icon('expand')}</span>
       <span class="photo-counter" id="gallery-counter">${index + 1} / ${photos.length}</span>
@@ -61,8 +61,8 @@ export function renderGallery(photos: PhotoView[], index: number): string {
     <div class="gallery-nav">
       <span class="gallery-caption" id="gallery-caption">${escapeHtml(galleryCaption(photo))}</span>
       <span class="gallery-buttons">
-        <button type="button" class="icon-button" data-action="gallery-prev" aria-label="Предыдущее фото"${photos.length < 2 ? ' disabled' : ''}>${icon('left')}</button>
-        <button type="button" class="icon-button" data-action="gallery-next" aria-label="Следующее фото"${photos.length < 2 ? ' disabled' : ''}>${icon('right')}</button>
+        <button type="button" class="icon-button" data-action="gallery-prev" aria-label="Previous photo"${photos.length < 2 ? ' disabled' : ''}>${icon('left')}</button>
+        <button type="button" class="icon-button" data-action="gallery-next" aria-label="Next photo"${photos.length < 2 ? ' disabled' : ''}>${icon('right')}</button>
       </span>
     </div>
     ${photos.length > 1 ? `<div class="thumbs is-picker-row">${thumbs}</div>` : ''}`;
@@ -70,26 +70,26 @@ export function renderGallery(photos: PhotoView[], index: number): string {
 
 export function renderRoomList(view: ListingView, selected: Selection): string {
   const all = `<button type="button" class="room-row is-all" data-select="all" aria-current="${selected === 'all'}">
-      <span class="room-name">Вся квартира</span>
-      <span class="room-count">${view.photos.length ? countLabel(view.photos.length, ['фото', 'фото', 'фото']) : 'без фото'}</span>
+      <span class="room-name">Entire apartment</span>
+      <span class="room-count">${view.photos.length ? countLabel(view.photos.length, ['photo', 'photos', 'photos']) : 'no photos'}</span>
     </button>`;
   const rooms = view.rooms.map((room) => `<button type="button" class="room-row" data-select="${escapeHtml(room.id)}" aria-current="${selected === room.id}">
-      <span class="room-name">${escapeHtml(room.label)}${room.question ? `<span class="room-question" title="${escapeHtml(room.question)}" aria-label="Есть открытый вопрос">${icon('question')}</span>` : ''}</span>
-      <span class="room-count">${room.photoIds.length ? countLabel(room.photoIds.length, ['фото', 'фото', 'фото']) : ''}</span>
+      <span class="room-name">${escapeHtml(room.label)}${room.question ? `<span class="room-question" title="${escapeHtml(room.question)}" aria-label="Open question">${icon('question')}</span>` : ''}</span>
+      <span class="room-count">${room.photoIds.length ? countLabel(room.photoIds.length, ['photo', 'photos', 'photos']) : ''}</span>
     </button>`).join('');
-  return `<h2 class="sidebar-title">Помещения</h2>${all}${rooms || '<p class="panel-note">В модели нет помещений.</p>'}`;
+  return `<h2 class="sidebar-title">Rooms</h2>${all}${rooms || '<p class="panel-note">The model has no rooms.</p>'}`;
 }
 
 function flatLead(view: ListingView): string {
   const declared: string[] = [];
   if (view.flat.areaDeclared !== undefined) declared.push(formatArea(view.flat.areaDeclared));
-  if (view.flat.roomsDeclared !== undefined) declared.push(`${number.format(view.flat.roomsDeclared)} ${view.flat.roomsDeclared === 1 ? 'комната' : 'комнаты'}`);
-  const first = declared.length ? `${declared.join(' и ')} по объявлению.` : 'Площадь и число комнат в объявлении не указаны.';
-  const rooms = countLabel(view.flat.roomCount, ['помещение', 'помещения', 'помещений']);
+  if (view.flat.roomsDeclared !== undefined) declared.push(`${number.format(view.flat.roomsDeclared)} ${view.flat.roomsDeclared === 1 ? 'room' : 'rooms'}`);
+  const first = declared.length ? `${declared.join(' and ')} in the listing.` : 'The listing does not specify the area or number of rooms.';
+  const rooms = countLabel(view.flat.roomCount, ['room', 'rooms', 'rooms']);
   const photos = view.flat.photoCount
-    ? `и ${countLabel(view.flat.photoCount, ['фотография', 'фотографии', 'фотографий'])}`
-    : ', фотографий нет';
-  return `${first} В модели ${rooms} ${photos}.`;
+    ? `and ${countLabel(view.flat.photoCount, ['photo', 'photos', 'photos'])}`
+    : 'and no photos';
+  return `${first} The model contains ${rooms} ${photos}.`;
 }
 
 export type PanelOptions = {
@@ -100,44 +100,44 @@ export type PanelOptions = {
 export function renderRoomPanel(view: ListingView, selected: Selection, options: PanelOptions = {}): string {
   if (selected === 'all') {
     const photos = view.photos.length
-      ? `<h3 class="panel-section">Все фотографии</h3>${renderThumbGrid(view.photos)}`
-      : `<p class="panel-note">В модели нет фотографий.</p>`;
-    return `<header class="panel-head"><h2>Вся квартира</h2><p class="panel-lead">${escapeHtml(flatLead(view))}</p></header>${photos}`;
+      ? `<h3 class="panel-section">All photos</h3>${renderThumbGrid(view.photos)}`
+      : `<p class="panel-note">The model has no photos.</p>`;
+    return `<header class="panel-head"><h2>Entire apartment</h2><p class="panel-lead">${escapeHtml(flatLead(view))}</p></header>${photos}`;
   }
 
   const room = view.rooms.find((item) => item.id === selected);
-  if (!room) return `<p class="panel-note">Помещение не найдено.</p>`;
+  if (!room) return `<p class="panel-note">Room not found.</p>`;
   const origin = [room.basisLabel.charAt(0).toUpperCase() + room.basisLabel.slice(1)];
-  if (room.confidence !== undefined) origin.push(`уверенность ${formatPercent(room.confidence)}`);
-  if (room.reviewed) origin.push('подтверждено человеком');
+  if (room.confidence !== undefined) origin.push(`${formatPercent(room.confidence)} confidence`);
+  if (room.reviewed) origin.push('human-confirmed');
 
   let gallery: string;
   if (!view.photosBound) {
-    gallery = `<p class="panel-note">Фотографии пока не привязаны к помещениям.</p><button type="button" class="link-button" data-select="all">Смотреть все фото</button>`;
+    gallery = `<p class="panel-note">Photos have not yet been assigned to rooms.</p><button type="button" class="link-button" data-select="all">View all photos</button>`;
   } else if (room.photoIds.length === 0) {
-    gallery = `<p class="panel-note">К этому помещению фотографии не привязаны.</p>`;
+    gallery = `<p class="panel-note">No photos are assigned to this room.</p>`;
   } else {
     const photos = photosFor(view, selected);
-    gallery = `<h3 class="panel-section">${countLabel(photos.length, ['фотография', 'фотографии', 'фотографий'])}</h3><div class="gallery" id="gallery">${renderGallery(photos, 0)}</div>`;
+    gallery = `<h3 class="panel-section">${countLabel(photos.length, ['photo', 'photos', 'photos'])}</h3><div class="gallery" id="gallery">${renderGallery(photos, 0)}</div>`;
   }
 
   const enter = options.walkable?.(room.id)
-    ? `<button type="button" class="enter-room" data-action="enter-room" data-room="${escapeHtml(room.id)}">${icon('walk')}Перейти в комнату${icon('arrow')}</button>`
+    ? `<button type="button" class="enter-room" data-action="enter-room" data-room="${escapeHtml(room.id)}">${icon('walk')}Enter room${icon('arrow')}</button>`
     : '';
   return `<header class="panel-head">
       <h2>${escapeHtml(room.label)}</h2>
       <p class="panel-sub">${escapeHtml(room.typeLabel)}</p>
       <p class="panel-origin">${escapeHtml(origin.join(', '))}.</p>
-      ${room.question ? `<p class="panel-question"><span class="panel-question-mark">${icon('question')}</span><span><b>Вопрос модели.</b> ${escapeHtml(room.question)}</span></p>` : ''}
+      ${room.question ? `<p class="panel-question"><span class="panel-question-mark">${icon('question')}</span><span><b>Model question.</b> ${escapeHtml(room.question)}</span></p>` : ''}
       ${enter}
     </header>${gallery}`;
 }
 
 function scaleSentence(view: ListingView): string {
-  if (view.plan.pxPerMeter === undefined) return 'Масштаб плана не определён.';
-  const parts = [`Масштаб плана ${view.plan.basisLabel}`];
-  if (view.plan.confidence !== undefined) parts.push(`уверенность ${formatPercent(view.plan.confidence)}`);
-  if (view.plan.reviewed) parts.push('подтверждён человеком');
+  if (view.plan.pxPerMeter === undefined) return 'Floor-plan scale is unknown.';
+  const parts = [`Floor-plan scale ${view.plan.basisLabel}`];
+  if (view.plan.confidence !== undefined) parts.push(`${formatPercent(view.plan.confidence)} confidence`);
+  if (view.plan.reviewed) parts.push('human-confirmed');
   return `${parts.join(', ')}.`;
 }
 
@@ -145,8 +145,8 @@ function ceilingSentence(view: ListingView): string {
   const ceiling = view.assumptions[0];
   if (!ceiling) return '';
   const value = formatMeters(view.flat.wallHeight);
-  if (ceiling.basisLabel === 'принято по умолчанию') return `Высота потолка ${value} принята по умолчанию.`;
-  return `Высота потолка ${value} (${ceiling.basisLabel}).`;
+  if (ceiling.basisLabel === 'default assumption') return `Ceiling height ${value} is a default assumption.`;
+  return `Ceiling height ${value} (${ceiling.basisLabel}).`;
 }
 
 function verificationSentence(report: ReportResult): string {
@@ -155,10 +155,10 @@ function verificationSentence(report: ReportResult): string {
 
 export function renderAssumptionStrip(view: ListingView, report: ReportResult): string {
   const sentences = [scaleSentence(view), ceilingSentence(view)];
-  if (view.questions.length) sentences.push(`Открытых вопросов: ${view.questions.length}.`);
+  if (view.questions.length) sentences.push(`Open questions: ${view.questions.length}.`);
   sentences.push(verificationSentence(report));
   return `<p class="assumptions-text">${sentences.filter(Boolean).map(escapeHtml).join(' ')}</p>
-    <button type="button" class="text-button" data-action="about">${icon('info')}Подробнее</button>`;
+    <button type="button" class="text-button" data-action="about">${icon('info')}Details</button>`;
 }
 
 /** Validator messages name rooms by id; the dialog shows the room label instead. Other ids stay as they are. */
@@ -171,12 +171,12 @@ function humanizeIds(text: string, view: ListingView): string {
 
 function reportSection(report: ReportResult, view: ListingView): string {
   if (report.status === 'missing') {
-    return `<p>Отчёт Validator для этой ревизии не найден. Связность комнат, ширина проходов и масштаб не проверены; площади помещений не подтверждены.</p>`;
+    return `<p>No Validator report was found for this revision. Room connectivity, clearance, and scale are unverified; room areas are not confirmed.</p>`;
   }
   if (report.status === 'stale') {
-    return `<p>Найден отчёт проверки, но он относится к другой модели или ревизии и не учитывается: связность комнат и ширина проходов не проверены.</p>`;
+    return `<p>A validation report was found, but it belongs to another model or revision and is ignored. Room connectivity and clearance are unverified.</p>`;
   }
-  if (report.status === 'invalid') return `<p>Файл отчёта не соответствует контракту и не учитывается: связность комнат и ширина проходов не проверены.</p>`;
+  if (report.status === 'invalid') return `<p>The report file does not match the contract and is ignored. Room connectivity and clearance are unverified.</p>`;
 
   const { report: data } = report;
   const verification = walkVerification(report);
@@ -184,10 +184,7 @@ function reportSection(report: ReportResult, view: ListingView): string {
   const byStatus = (status: string) => data.checks.filter((check) => check.status === status);
   const count = (status: string) => byStatus(status).length;
   const totals = [
-    `${count('pass')} ${count('pass') === 1 ? 'пройдена' : 'пройдено'}`,
-    `${count('fail')} не ${count('fail') === 1 ? 'пройдена' : 'пройдено'}`,
-    `${count('unverified')} не ${count('unverified') === 1 ? 'проверена' : 'проверено'}`,
-    `${count('skipped')} ${count('skipped') === 1 ? 'пропущена' : 'пропущено'}`,
+    `${count('pass')} passed`, `${count('fail')} failed`, `${count('unverified')} unverified`, `${count('skipped')} skipped`,
   ];
   const list = (status: string, className: string, title: string) => {
     const items = byStatus(status);
@@ -196,57 +193,71 @@ function reportSection(report: ReportResult, view: ListingView): string {
   };
   return `<p><b>${escapeHtml(verification.headline)}</b></p>
     <ul class="about-navigation">${verification.lines.map((item) => `<li>${human(item)}</li>`).join('')}</ul>
-    <p>Подтверждённых сведений модели: ${formatPercent(data.confirmation)} (доля сущностей, подтверждённых человеком или с уверенностью не ниже 0,6; это не доля пройденных проверок и не доля измерений).</p>
-    <p>Проверок ${data.checks.length}: ${escapeHtml(totals.join(', '))}. Отчёт для модели ${escapeHtml(data.modelId)}, ревизия ${data.revision}.</p>
-    ${list('fail', 'about-failed', 'Не пройдено')}
-    ${list('unverified', 'about-unverified', 'Не проверено: данных для проверки нет, это не «пройдено»')}
-    ${list('skipped', 'about-skipped', 'Пропущено: проверка в этом срезе не выполняется')}
-    ${data.review.items.length ? `<p>На ревью ${countLabel(data.review.items.length, ['пункт', 'пункта', 'пунктов'])}:</p><ul class="about-review">${data.review.items.map((item) => `<li>${human(item.reason)}${item.suggestion ? ` <span class="muted">${human(item.suggestion)}</span>` : ''}</li>`).join('')}</ul>` : ''}`;
+    <p>Confirmed model data: ${formatPercent(data.confirmation)} (entities confirmed by a person or with confidence of at least 0.6; this is not the share of passed checks or measurements).</p>
+    <p>${data.checks.length} checks: ${escapeHtml(totals.join(', '))}. Report for model ${escapeHtml(data.modelId)}, revision ${data.revision}.</p>
+    ${list('fail', 'about-failed', 'Failed')}
+    ${list('unverified', 'about-unverified', 'Unverified: insufficient data; this does not mean passed')}
+    ${list('skipped', 'about-skipped', 'Skipped: this check is not run in the current slice')}
+    ${data.review.items.length ? `<p>${countLabel(data.review.items.length, ['review item', 'review items', 'review items'])}:</p><ul class="about-review">${data.review.items.map((item) => `<li>${human(item.reason)}${item.suggestion ? ` <span class="muted">${human(item.suggestion)}</span>` : ''}</li>`).join('')}</ul>` : ''}`;
 }
 
-export function renderAbout(view: ListingView, report: ReportResult, source: DataSource, prep?: WalkPrep): string {
-  const link = view.source.url
-    ? ` <a href="${escapeHtml(view.source.url)}" target="_blank" rel="noopener noreferrer">Открыть объявление${icon('external')}</a>`
+export function renderAbout(
+  view: ListingView,
+  report: ReportResult,
+  source: DataSource,
+  prep?: WalkPrep,
+  options: { demo?: boolean; synthetic?: boolean } = {},
+): string {
+  const link = view.source.url && !options.synthetic
+    ? ` <a href="${escapeHtml(view.source.url)}" target="_blank" rel="noopener noreferrer">Open listing${icon('external')}</a>`
     : '';
-  const mode = source.kind === 'fixture'
-    ? 'Статический режим: показан эталон 54541 из бандла. Правки не сохраняются, Convex не подключён.'
-    : 'Статический режим: модель прочитана из файла папки запуска. Правки не сохраняются, Convex не подключён.';
+  const demoNote = options.synthetic
+    ? '<p><b>This is Viewer test data, not a listing apartment.</b> It must not be presented as CityExpert 54541.</p>'
+    : options.demo
+      ? '<p><b>Prepared demo of reference 54541.</b> The listing URL is not fetched or recognized in this static showcase.</p>'
+      : '';
+  const mode = options.synthetic
+    ? 'Static mode: synthetic Viewer test model. Changes are not saved and Convex is not connected.'
+    : source.kind === 'fixture'
+      ? 'Static mode: bundled reference model 54541. Changes are not saved and Convex is not connected.'
+      : 'Static mode: model loaded from the run folder. Changes are not saved and Convex is not connected.';
   const questions = view.questions.length
     ? `<ul class="about-questions">${view.questions.map((question) => `<li><b>${escapeHtml(question.subject)}.</b> ${escapeHtml(question.text)}</li>`).join('')}</ul>`
-    : '<p>Открытых вопросов нет.</p>';
+    : '<p>No open questions.</p>';
 
   return `<form method="dialog" class="dialog-head">
-      <h2 id="about-title">О модели</h2>
-      <button type="submit" class="icon-button" aria-label="Закрыть">${icon('close')}</button>
+      <h2 id="about-title">About the model</h2>
+      <button type="submit" class="icon-button" aria-label="Close">${icon('close')}</button>
     </form>
     <div class="dialog-body">
       <section>
-        <h3>Откуда данные</h3>
-        <p>${escapeHtml(view.source.siteLabel)}, получено ${escapeHtml(view.source.fetchedAtLabel)}.${link}</p>
-        <p>Разметка модели: ${escapeHtml(view.provenance.join(', ') || 'не указана')}.</p>
-        <p class="muted">Модель ${escapeHtml(view.id)}, ревизия ${view.revision}.</p>
+        <h3>Data sources</h3>
+        ${demoNote}
+        <p>${escapeHtml(view.source.siteLabel)}, retrieved ${escapeHtml(view.source.fetchedAtLabel)}.${link}</p>
+        <p>Model provenance: ${escapeHtml(view.provenance.join(', ') || 'not specified')}.</p>
+        <p class="muted">Model ${escapeHtml(view.id)}, revision ${view.revision}.</p>
       </section>
       <section>
-        <h3>Что принято без измерений</h3>
+        <h3>Assumptions without measurements</h3>
         <p>${escapeHtml(scaleSentence(view))}</p>
-        <ul class="about-defaults">${view.assumptions.map((item) => `<li>${escapeHtml(item.subject)} ${escapeHtml(item.value)}, ${escapeHtml(item.basisLabel)}${item.reviewed ? ', подтверждено' : ''}.</li>`).join('')}</ul>
+        <ul class="about-defaults">${view.assumptions.map((item) => `<li>${escapeHtml(item.subject)} ${escapeHtml(item.value)}, ${escapeHtml(item.basisLabel)}${item.reviewed ? ', confirmed' : ''}.</li>`).join('')}</ul>
       </section>
       <section>
-        <h3>Открытые вопросы${view.questions.length ? ` (${view.questions.length})` : ''}</h3>
+        <h3>Open questions${view.questions.length ? ` (${view.questions.length})` : ''}</h3>
         ${questions}
       </section>
       <section>
-        <h3>Проверка</h3>
+        <h3>Validation</h3>
         ${reportSection(report, view)}
       </section>
       <section>
-        <h3>Геометрия и сцена</h3>
+        <h3>Geometry and scene</h3>
         ${prep
           ? `<ul class="about-geometry">${prep.diagnostics.map((line) => `<li>${escapeHtml(line)}</li>`).join('')}</ul>`
-          : '<p>3D-сцена не собиралась: Builder не подключён.</p>'}
+          : '<p>The 3D scene was not built because Builder is not connected.</p>'}
       </section>
       <section>
-        <h3>Режим</h3>
+        <h3>Mode</h3>
         <p>${escapeHtml(mode)}</p>
       </section>
     </div>`;
@@ -256,30 +267,30 @@ export type StageView = 'plan' | 'top' | 'scene' | 'walk';
 
 /** «Прогулка готова» appears only when the report confirmed clearance; otherwise the walk stays a trial. */
 export function walkTitle(verification?: WalkVerification): string {
-  return verification?.level === 'ready' ? 'Прогулка' : 'Пробная прогулка';
+  return verification?.level === 'ready' ? 'Walkthrough' : 'Trial walkthrough';
 }
 
 export function renderStageStatus(activeView: StageView, mode: Overlay['mode'], prep?: WalkPrep, revision?: number, report?: ReportResult): string {
   if (activeView !== 'plan') {
-    if (!prep) return '3D-сцена ещё не построена: Builder не подключён, сцена пуста.';
-    if (!prep.scene) return `3D-сцена ещё не построена: ${prep.sceneError ?? 'Builder не собрал модель'}.`;
+    if (!prep) return 'The 3D scene has not been built: Builder is not connected and the scene is empty.';
+    if (!prep.scene) return `The 3D scene has not been built: ${prep.sceneError ?? 'Builder did not build the model'}.`;
     const verification = walkVerification(report ?? { status: 'missing', url: '' });
     const title = walkTitle(verification);
-    const built = `Сцена собрана Builder по ревизии ${revision ?? prep.scene.group.userData.revision ?? 0}: серая коробка L0 без отделки, размеры приблизительные.`;
-    if (activeView === 'walk') return `${title}: ${verification.headline} WASD или стрелки — идти, Q и E — повернуть, потяните мышью — осмотреться, Esc — выйти.`;
-    const hint = activeView === 'top' ? 'Вид сверху: колёсико — приблизить, потяните — сдвинуть.' : 'Обзор: потяните, чтобы повернуть, колёсико — приблизить, подпись помещения — войти.';
-    const walk = prep.walk.available ? ` ${title}: ${verification.headline}` : ` Прогулка недоступна: ${prep.walk.reason}.`;
+    const built = `Scene built by Builder from revision ${revision ?? prep.scene.group.userData.revision ?? 0}: unfinished L0 shell with approximate dimensions.`;
+    if (activeView === 'walk') return `${title}: ${verification.headline} Use WASD or arrow keys to move, Q and E to turn, drag to look around, and Esc to exit.`;
+    const hint = activeView === 'top' ? 'Top view: scroll to zoom and drag to pan.' : 'Overview: drag to rotate, scroll to zoom, or select a room label to enter.';
+    const walk = prep.walk.available ? ` ${title}: ${verification.headline}` : ` Walkthrough unavailable: ${prep.walk.reason}.`;
     return `${built} ${hint}${walk}`;
   }
   switch (mode) {
     case 'plan':
-      return 'Исходный план с разметкой из модели. 3D-сцена ещё не построена.';
+      return 'Source floor plan with the model overlay. The 3D scene has not been built yet.';
     case 'plan-only':
-      return 'Исходный план без разметки: масштаб модели ещё не определён. 3D-сцена ещё не построена.';
+      return 'Source floor plan without an overlay because the model scale is unknown. The 3D scene has not been built yet.';
     case 'scheme':
-      return 'Исходный план недоступен, показана схема стен из модели. 3D-сцена ещё не построена.';
+      return 'The source floor plan is unavailable; showing the model wall layout. The 3D scene has not been built yet.';
     default:
-      return 'Исходный план недоступен, геометрии в модели нет. 3D-сцена ещё не построена.';
+      return 'The source floor plan is unavailable and the model has no geometry. The 3D scene has not been built yet.';
   }
 }
 
@@ -288,26 +299,26 @@ export function renderWalkHud(verification?: WalkVerification): string {
   const status = verification ?? walkVerification({ status: 'missing', url: '' });
   return `<div class="walk-banner">
       <span class="live-dot${status.level === 'ready' ? '' : ' is-trial'}" aria-hidden="true"></span>
-      <span class="hud-room" id="hud-room">Вне помещений</span>
+      <span class="hud-room" id="hud-room">Outside rooms</span>
       <span class="hud-area" id="hud-area"></span>
       <span class="hud-verification" id="hud-verification" title="${escapeHtml(status.headline)}">${escapeHtml(status.headline)}</span>
-      <button type="button" class="hud-button" data-action="lock-mouse" title="Esc — освободить мышь">${icon('eye')}Осмотр мышью</button>
-      <button type="button" class="hud-button" data-action="walk-exit">${icon('close')}Выйти</button>
+      <button type="button" class="hud-button" data-action="lock-mouse" title="Esc releases the mouse">${icon('eye')}Mouse look</button>
+      <button type="button" class="hud-button" data-action="walk-exit">${icon('close')}Exit</button>
     </div>
     <div class="crosshair" aria-hidden="true"></div>
-    <p class="walk-keys">WASD или стрелки — идти, Q и E — повернуть, Shift — быстрее. Потяните мышью — осмотреться.</p>
-    <div class="touch-controls" aria-label="Кнопки движения">
-      ${keysRow([['KeyQ', '↶', 'Повернуть влево'], ['KeyW', '↑', 'Шаг вперёд'], ['KeyE', '↷', 'Повернуть вправо']])}
-      ${keysRow([['KeyA', '←', 'Шаг влево'], ['KeyS', '↓', 'Шаг назад'], ['KeyD', '→', 'Шаг вправо']])}
+    <p class="walk-keys">Use WASD or arrow keys to move, Q and E to turn, and Shift to move faster. Drag to look around.</p>
+    <div class="touch-controls" aria-label="Movement controls">
+      ${keysRow([['KeyQ', '↶', 'Turn left'], ['KeyW', '↑', 'Move forward'], ['KeyE', '↷', 'Turn right']])}
+      ${keysRow([['KeyA', '←', 'Move left'], ['KeyS', '↓', 'Move back'], ['KeyD', '→', 'Move right']])}
     </div>`;
 }
 
 export function renderLightbox(): string {
-  return `<button type="button" class="icon-button lightbox-close" data-action="lightbox-close" aria-label="Закрыть">${icon('close')}</button>
-    <button type="button" class="icon-button lightbox-nav lightbox-prev" data-action="lightbox-prev" aria-label="Предыдущее фото">${icon('left')}</button>
+  return `<button type="button" class="icon-button lightbox-close" data-action="lightbox-close" aria-label="Close">${icon('close')}</button>
+    <button type="button" class="icon-button lightbox-nav lightbox-prev" data-action="lightbox-prev" aria-label="Previous photo">${icon('left')}</button>
     <figure class="lightbox-figure">
       <img id="lightbox-image" alt="" />
       <figcaption id="lightbox-caption"></figcaption>
     </figure>
-    <button type="button" class="icon-button lightbox-nav lightbox-next" data-action="lightbox-next" aria-label="Следующее фото">${icon('right')}</button>`;
+    <button type="button" class="icon-button lightbox-nav lightbox-next" data-action="lightbox-next" aria-label="Next photo">${icon('right')}</button>`;
 }

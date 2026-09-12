@@ -15,6 +15,7 @@
   "dependencies": {
     "@flatwalk/contract": "file:../contract",
     "@flatwalk/geometry": "file:../geometry",
+    "@napi-rs/canvas": "1.0.9",
     "three": "0.183.0"
   },
   "devDependencies": {

@@ -12,6 +12,7 @@ import { requireRunDir } from "./layout.ts";
 import { loadLatestModel, readJsonFile } from "./model-io.ts";
 import { repoRoot, runPaths } from "./paths.ts";
 import { resolveExistingPath } from "./resolve-path.ts";
+import { writeAcceptedOverlay } from "./overlay.ts";
 import { parserTimeoutMs, runPythonParser } from "./python-parser.ts";
 
 function pad(n: number): string {
@@ -217,6 +218,12 @@ export async function runParse(runDir: string, adapters: AdapterMode): Promise<v
   diagnostics.publishedRevision = applied.model.revision;
   diagnostics.patchFile = patchFile;
   await writeDiagnostics(paths.parser, diagnostics);
+  try {
+    await writeAcceptedOverlay(paths.root, applied.model, listing.planPath);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.log(`parse: overlay failed (${message}); published revision kept`);
+  }
   console.log(`parse: ${source} patch → ${patchFile}`);
   console.log(`parse: accepted ${applied.model.id} rev ${applied.model.revision} via public Resolver`);
   console.log("parse: proposeRepair is not called; repair is a later runGeometryRepair stage");

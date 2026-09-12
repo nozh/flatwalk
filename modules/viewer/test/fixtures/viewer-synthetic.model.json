@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "0.1",
+  "id": "viewer-synthetic",
+  "revision": 1,
+  "source": { "site": "manual", "fetchedAt": "2026-09-12T10:00:00Z" },
+  "flat": {
+    "areaDeclared": 20,
+    "roomsDeclared": 2,
+    "meta": { "provenance": "viewer-test@0.1", "basis": "declared" },
+    "defaults": {
+      "wallHeight": 2.8,
+      "doorHeight": 2.1,
+      "windowSill": 0.9,
+      "windowHeight": 1.5,
+      "meta": {
+        "wallHeight": { "provenance": "viewer-test@0.1", "basis": "assumed" },
+        "doorHeight": { "provenance": "viewer-test@0.1", "basis": "assumed" },
+        "windowSill": { "provenance": "viewer-test@0.1", "basis": "assumed" },
+        "windowHeight": { "provenance": "viewer-test@0.1", "basis": "assumed" }
+      }
+    }
+  },
+  "plan": {
+    "asset": "plan",
+    "pxPerMeter": 20,
+    "meta": { "provenance": "viewer-test@0.1", "basis": "declared-area" }
+  },
+  "vertices": { "v1": [0, 0], "v2": [4, 0], "v3": [4, 3], "v4": [0, 3] },
+  "walls": {
+    "w1": { "a": "v1", "b": "v2", "thickness": 0.2, "exterior": true, "meta": { "provenance": "viewer-test@0.1", "basis": "inferred" } }
+  },
+  "openings": {},
+  "rooms": {
+    "r2": { "anchor": [3, 1.5], "type": "kitchen", "label": "Кухня", "meta": { "provenance": "viewer-test@0.1", "basis": "inferred" } },
+    "r1": { "anchor": [1, 1.5], "type": "living", "label": "Гостиная", "meta": { "provenance": "viewer-test@0.1", "basis": "inferred" } }
+  },
+  "assets": {
+    "plan": { "kind": "plan", "url": "materials/plan.png", "width": 80, "height": 60, "meta": { "provenance": "viewer-test@0.1", "basis": "declared" } }
+  }
+}

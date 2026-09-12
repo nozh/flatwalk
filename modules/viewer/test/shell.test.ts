@@ -1,0 +1,82 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { describe, expect, it } from 'vitest';
+import { validateFlatModel, type FlatModel } from '@flatwalk/contract';
+import { renderShell } from '../src/shell';
+
+const dir = dirname(fileURLToPath(import.meta.url));
+const synthetic = JSON.parse(readFileSync(join(dir, 'fixtures/viewer-synthetic.model.json'), 'utf8'));
+const reference = JSON.parse(readFileSync(join(dir, '../../../fixtures/54541/flat.model.json'), 'utf8'));
+
+function model(raw: unknown): FlatModel {
+  const parsed = validateFlatModel(raw);
+  if (!parsed.success) throw new Error('invalid test model');
+  return parsed.data;
+}
+
+function mount(html: string) {
+  const root = document.createElement('div');
+  root.innerHTML = html;
+  document.body.replaceChildren(root);
+  return root;
+}
+
+describe('renderShell', () => {
+  it('shows a loading state', () => {
+    const root = mount(renderShell({ kind: 'loading' }));
+    expect(root.textContent).toContain('Загружаем модель');
+  });
+
+  it('explains a missing static file and offers the bundled reference', () => {
+    const root = mount(renderShell({ kind: 'missing', source: { kind: 'static' }, url: '/model/latest.json' }));
+    expect(root.textContent).toContain('Модель не найдена');
+    expect(root.textContent).toContain('/model/latest.json');
+    expect(root.querySelector('a[href="?src=fixture"]')).not.toBeNull();
+    expect(root.querySelector('button[data-action="reload"]')).not.toBeNull();
+  });
+
+  it('explains a missing 54541 fixture without treating the synthetic test as that listing', () => {
+    const root = mount(renderShell({ kind: 'missing', source: { kind: 'fixture' }, url: '/fixtures/54541/flat.model.json' }));
+    expect(root.textContent).toContain('Эталон 54541 недоступен');
+    expect(root.textContent).not.toContain('viewer-synthetic');
+    expect(root.querySelector('a[href="./"]')).not.toBeNull();
+  });
+
+  it('shows contract issues for an invalid model behind a details toggle', () => {
+    const root = mount(renderShell({ kind: 'invalid', issues: ['schemaVersion: Invalid', 'rooms.r1.anchor: Required'] }));
+    expect(root.textContent).toContain('Модель не прошла проверку');
+    expect(root.textContent).toContain('2');
+    expect(root.querySelector('details')?.textContent).toContain('schemaVersion: Invalid');
+  });
+
+  it('renders id, rooms, the empty-scene notice and a plan-unavailable fallback', () => {
+    const root = mount(renderShell({ kind: 'ready', model: model(synthetic), source: { kind: 'static' }, plan: { status: 'unavailable' } }));
+    expect(root.textContent).toContain('viewer-synthetic');
+    expect(root.textContent).toContain('Гостиная');
+    expect(root.textContent).toContain('Кухня');
+    expect(root.textContent).toContain('3D-сцена ещё не построена');
+    expect(root.textContent).toContain('Исходный план недоступен');
+    expect(root.querySelector('#scene-slot')).not.toBeNull();
+    expect(root.textContent).toContain('Статический режим');
+    expect(root.querySelector('svg.plan-overlay.is-scheme')).not.toBeNull();
+  });
+
+  it('builds the full listing screen for the reference without technical ids in the main areas', () => {
+    const root = mount(renderShell({ kind: 'ready', model: model(reference), source: { kind: 'fixture' }, plan: { status: 'ok' }, report: { status: 'missing', url: '/x' } }));
+    expect(root.querySelector('h1')?.textContent).toBe('Квартира 105 м²');
+    expect(root.querySelector('svg.plan-overlay.is-plan image')?.getAttribute('href')).toBe('/fixtures/54541/plan.png');
+    expect(root.querySelectorAll('#room-list button[data-select]')).toHaveLength(11);
+    expect(root.querySelector('#room-panel h2')?.textContent).toBe('Вся квартира');
+    expect(root.querySelector('button[data-view="scene"]')).not.toBeNull();
+    expect(root.querySelector('button[data-action="toggle-marks"]')?.getAttribute('aria-pressed')).toBe('true');
+    const walk = root.querySelector<HTMLButtonElement>('button.walk-button');
+    expect(walk?.disabled).toBe(true);
+    expect(root.querySelector('dialog#about-dialog')).not.toBeNull();
+    expect(root.querySelector('dialog#lightbox')).not.toBeNull();
+    const main = root.querySelector('main');
+    expect(main?.textContent).not.toMatch(/\b[rwop]\d+\b/);
+    expect(main?.textContent).not.toContain('cityexpert-54541');
+    expect(root.querySelector('a[href^="https://cityexpert.rs"]')?.getAttribute('target')).toBe('_blank');
+  });
+});

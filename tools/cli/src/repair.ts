@@ -131,6 +131,7 @@ export async function runLimitedRepair(
   runDir: string,
   adapters: AdapterMode,
   grok?: GeometryRepairClient,
+  env: NodeJS.Dict<string> = process.env,
 ): Promise<RepairPersistResult> {
   const paths = await requireRunDir(runDir);
   const model = await loadLatestModel(paths.root);
@@ -138,8 +139,8 @@ export async function runLimitedRepair(
     grok ??
     createGrokClient({
       mode: adapters,
-      env: process.env,
-      fixtureDir: process.env.FLATWALK_GROK_FIXTURE_DIR,
+      env,
+      fixtureDir: env.FLATWALK_GROK_FIXTURE_DIR,
       transport:
         adapters === "fixture"
           ? async () => {

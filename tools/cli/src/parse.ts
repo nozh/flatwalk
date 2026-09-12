@@ -13,7 +13,7 @@ import { loadLatestModel, readJsonFile } from "./model-io.ts";
 import { repoRoot, runPaths } from "./paths.ts";
 import { resolveExistingPath } from "./resolve-path.ts";
 import { writeAcceptedOverlay } from "./overlay.ts";
-import { parserTimeoutMs, runPythonParser } from "./python-parser.ts";
+import { parserOutcomeLabel, parserTimeoutMs, runHttpParser, runPythonParser } from "./python-parser.ts";
 
 function pad(n: number): string {
   return String(n).padStart(3, "0");
@@ -76,7 +76,13 @@ function asPatch(value: unknown, origin: string): Patch {
   return parsed.data;
 }
 
-export async function runParse(runDir: string, adapters: AdapterMode): Promise<void> {
+export type ParseOptions = {
+  env?: NodeJS.Dict<string>;
+  parser?: "python" | "http";
+};
+
+export async function runParse(runDir: string, adapters: AdapterMode, options: ParseOptions = {}): Promise<void> {
+  const env = options.env ?? process.env;
   const paths = await requireRunDir(runDir);
   const model = await loadLatestModel(paths.root);
   const previous = structuredClone(model);
@@ -89,17 +95,36 @@ export async function runParse(runDir: string, adapters: AdapterMode): Promise<v
     grokRectsFallbackWhen: [...GROK_RECTS_FALLBACK_WHEN],
   };
 
-  const timeoutMs = parserTimeoutMs();
-  console.log(`parse: calling python -m plan_parser (timeout ${timeoutMs} ms)`);
-  const python = await runPythonParser({
-    planPath: listing.planPath,
-    listingId: listing.listingId,
-    area: listing.area,
-    outDir: paths.parser,
-    repoRoot: repoRoot(),
-  });
+  const timeoutMs = parserTimeoutMs(env);
+  const parserUrl = (env.PARSER_URL ?? "").trim();
+  const parserMode = options.parser ?? (parserUrl ? "http" : "python");
+  console.log(
+    parserMode === "http"
+      ? `parse: PARSER_URL HTTP plan-parser (timeout ${timeoutMs} ms)`
+      : `parse: calling python -m plan_parser (timeout ${timeoutMs} ms)`,
+  );
+  const python =
+    parserMode === "http"
+      ? await runHttpParser({
+          planPath: listing.planPath,
+          listingId: listing.listingId,
+          area: listing.area,
+          outDir: paths.parser,
+          env,
+        })
+      : await runPythonParser({
+          planPath: listing.planPath,
+          listingId: listing.listingId,
+          area: listing.area,
+          outDir: paths.parser,
+          repoRoot: repoRoot(),
+          env,
+        });
   diagnostics.python = {
+    transport: parserMode,
+    outcome: parserOutcomeLabel(python),
     timeout: python.timeout,
+    unavailable: python.unavailable === true,
     error: python.error,
     exitCode: python.exitCode,
     reason: python.result?.reason,
@@ -127,8 +152,8 @@ export async function runParse(runDir: string, adapters: AdapterMode): Promise<v
     try {
       const grok = createGrokClient({
         mode: adapters,
-        env: process.env,
-        fixtureDir: process.env.FLATWALK_GROK_FIXTURE_DIR,
+        env,
+        fixtureDir: env.FLATWALK_GROK_FIXTURE_DIR,
         transport:
           adapters === "fixture"
             ? async () => {
@@ -140,7 +165,7 @@ export async function runParse(runDir: string, adapters: AdapterMode): Promise<v
         model,
         plan: { imageUrl: listing.planUrl ?? listing.planPath },
         grok,
-        fixtureId: process.env.FLATWALK_GROK_FIXTURE_ID ?? GROK_RECTS_FIXTURE_ID,
+        fixtureId: env.FLATWALK_GROK_FIXTURE_ID ?? GROK_RECTS_FIXTURE_ID,
       });
       diagnostics.grokRects = {
         reason: grokResult.reason,

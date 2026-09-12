@@ -20,6 +20,16 @@ npx tsx src/index.ts serve /tmp/flatwalk-54541 --print-cmd
 
 Live только явно (`--adapters live` / `--live` / `FLATWALK_ADAPTERS=live`). Значения ключей CLI не печатает. Нет ключа — live не подменяется fixture.
 
+Job API (тот же движок, не второй CLI). `serve` без `--print-cmd` слушает `http://127.0.0.1:8787/api/jobs`. Fixture:
+
+```text
+curl -s -X POST http://127.0.0.1:8787/api/jobs \
+  -H 'content-type: application/json' \
+  -d '{"from":"fixtures/54541","adapters":"fixture"}'
+```
+
+`GET /api/jobs/<id>` — статус, этапы, model/report; `GET …/file/materials/plan.png` — материалы. «Open prepared demo» / `?src=fixture` — отдельный запасной путь Viewer, не этот API.
+
 ```text
 npx tsx src/index.ts run /tmp/flatwalk-54541-live --from fixtures/54541 --adapters live --force
 ```

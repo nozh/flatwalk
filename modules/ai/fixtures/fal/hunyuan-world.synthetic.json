@@ -1,0 +1,13 @@
+{
+  "synthetic": true,
+  "note": "Synthetic fal-ai/hunyuan_world (image-to-panorama) body for adapter tests. Not a live fal result.",
+  "body": {
+    "image": {
+      "url": "https://example.test/synthetic-pano.png",
+      "content_type": "image/png",
+      "width": 1920,
+      "height": 960,
+      "file_name": "synthetic-pano.png"
+    }
+  }
+}

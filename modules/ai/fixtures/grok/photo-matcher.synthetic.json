@@ -1,0 +1,19 @@
+{
+  "synthetic": true,
+  "note": "Synthetic x.ai chat.completions body for adapter tests and local fixture runs. Not a live API result.",
+  "body": {
+    "id": "chatcmpl-synthetic",
+    "object": "chat.completion",
+    "model": "grok-4.6",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"photos\":[{\"assetId\":\"p3\",\"roomId\":\"r1\",\"wallId\":\"w1\",\"confidence\":0.82,\"floor\":\"parquet\",\"wallTone\":\"light\"}]}"
+        },
+        "finish_reason": "stop"
+      }
+    ]
+  }
+}

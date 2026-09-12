@@ -8,7 +8,8 @@
     ".": "./src/index.ts",
     "./grok-rects": "./src/grok-rects.ts",
     "./photo-matcher": "./src/photo-matcher.ts",
-    "./geometry-repair": "./src/geometry-repair.ts"
+    "./geometry-repair": "./src/geometry-repair.ts",
+    "./dresser": "./src/dresser.ts"
   },
   "scripts": {
     "test": "vitest run",

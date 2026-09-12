@@ -137,6 +137,26 @@ node --import tsx modules/ai/scripts/probe-photo-matcher-54541.ts
 FLATWALK_ADAPTERS=live node --import tsx modules/ai/scripts/probe-photo-matcher-54541.ts
 ```
 
+## dresser L1 (задача 3.3)
+
+Детерминированная отделка по текущим `assets.*.room` и `look.floor`. Сети и повторного распознавания фото нет. Патч только `rooms.<id>.dressing` (`module: dresser@0.1`).
+
+```ts
+import { apply } from "@flatwalk/resolver";
+import { runDresserL1 } from "@flatwalk/ai/dresser";
+
+const { patch, diagnostics } = runDresserL1({ model: accepted });
+const next = apply(accepted, patch, {
+  schemaVersion: "0.1",
+  modelId: accepted.id,
+  baseRevision: accepted.revision,
+  currentRevision: accepted.revision,
+  changes: [],
+});
+```
+
+Правила: голосуют только `parquet|tile|laminate`; `unknown` и фото без look не голосуют; уникальная мода побеждает; при равенстве максимума берётся fallback типа комнаты, если он среди победителей, иначе первый из `parquet`, `tile`, `laminate`; нет голосов → bathroom/wc/kitchen `tile`, иначе `parquet`. Мода — `basis: inferred`, fallback — `assumed`. Human-слоты не предлагаются. Повтор после apply с теми же зависимостями даёт `ops: []`. L2/fal в этом срезе не вызываются.
+
 ## geometry-repair (ограниченный срез)
 
 Это **не** `proposeRepair`. Validator по-прежнему не экспортирует авторемонт. Цикл живёт здесь, потому что нужен `createGrokClient`.

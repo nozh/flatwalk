@@ -60,3 +60,17 @@ export {
   type PhotoMatcherInput,
   type PhotoMatcherOutput,
 } from "./photo-matcher.js";
+export {
+  DRESSER_MODULE,
+  DRESSING_MATERIALS,
+  chooseL1Floor,
+  lookFloorVotes,
+  runDresserL1,
+  typeFallbackFloor,
+  type DressingMaterial,
+  type DresserFloorSource,
+  type DresserL1Diagnostics,
+  type DresserL1Input,
+  type DresserL1Output,
+  type DresserRoomDecision,
+} from "./dresser.js";

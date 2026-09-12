@@ -411,7 +411,7 @@ function consistencyChecks(model: FlatModel): { checks: ReportCheck[]; review: V
   for (const [id, opening] of Object.entries(model.openings)) {
     if (opening.kind !== "door") continue;
     const wall = model.walls[opening.wall];
-    if (!wall?.exterior || opening.entrance === true) continue;
+    if (!wall?.exterior || opening.entrance === true || opening.passable === false) continue;
     checks.push(
       check(
         `consistency.exterior-door-unmarked.${id}`,
@@ -419,15 +419,15 @@ function consistencyChecks(model: FlatModel): { checks: ReportCheck[]; review: V
         "fail",
         "warning",
         [`openings.${id}`],
-        `Наружная дверь ${id} не помечена как вход. Это не доказательство проходимости наружу.`,
+        `Наружная дверь ${id} не помечена как вход и не запрещена (passable:false). Нужно выбрать назначение.`,
       ),
     );
     review.push({
       id: `unmarked_${id}`,
       path: `openings.${id}`,
       severity: "warning",
-      reason: `Наружная дверь ${id} без entrance=true.`,
-      suggestion: "Пометьте единственный вход или оставьте дверь непроходимой (passable:false).",
+      reason: `Наружная дверь ${id} без entrance=true и без passable:false.`,
+      suggestion: "Пометьте единственный вход или запретите проход (passable:false).",
     });
   }
 
@@ -436,6 +436,7 @@ function consistencyChecks(model: FlatModel): { checks: ReportCheck[]; review: V
   const interiorFails: ReportCheck[] = [];
   for (const [id, opening] of Object.entries(model.openings)) {
     if (!isInteriorPassableDoor(opening)) continue;
+    if (model.walls[opening.wall]?.exterior) continue;
     if (!connected.has(id)) {
       interiorFails.push(
         check(

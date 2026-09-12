@@ -58,8 +58,15 @@ describe("54541 etalon", () => {
     expect(byId(report, "assets.files")?.status).toBe("unverified");
     expect(byId(report, "scale.evidence")?.status).toBe("unverified");
     expect(byId(report, "evidence.sources")?.status).toBe("unverified");
-    expect(report.review.items.some(item => item.path === "openings.o11")).toBe(true);
-    expect(report.review.items.some(item => item.path === "openings.o12")).toBe(true);
+  });
+
+  it("does not ask review for etalon terrace/loggia doors that are already passable:false", () => {
+    const report = validate(load54541());
+    expect(report.walkReady).toBe(true);
+    expect(byId(report, "consistency.exterior-door-unmarked.o11")).toBeUndefined();
+    expect(byId(report, "consistency.exterior-door-unmarked.o12")).toBeUndefined();
+    expect(report.review.items.map(item => item.path)).not.toContain("openings.o11");
+    expect(report.review.items.map(item => item.path)).not.toContain("openings.o12");
   });
 });
 
@@ -75,6 +82,20 @@ describe("diagnostic failures", () => {
     expect(check?.layer).toBe("navigation");
     expect(check?.entities).toContain("rooms.right");
     expect(check?.message.length).toBeGreaterThan(8);
+  });
+
+  it("asks review for an exterior door that is neither entrance nor passable:false", () => {
+    const model = walkableTwoRooms({
+      openings: {
+        d1: door("w25", 1, 1),
+        enter: door("w61", 1, 1, { entrance: true }),
+        terrace: door("w34", 1, 1),
+      },
+    });
+    const report = validate(model);
+    expect(report.walkReady).toBe(true);
+    expect(byId(report, "consistency.exterior-door-unmarked.terrace")?.status).toBe("fail");
+    expect(report.review.items.some(item => item.path === "openings.terrace")).toBe(true);
   });
 
   it("rejects a missing entrance without throwing", () => {

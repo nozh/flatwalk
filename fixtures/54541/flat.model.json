@@ -1,0 +1,1175 @@
+{
+  "schemaVersion": "0.1",
+  "id": "cityexpert-54541",
+  "revision": 0,
+  "source": {
+    "site": "cityexpert",
+    "url": "https://cityexpert.rs/izdavanje-nekretnina/beograd/54541/troiposoban-stan-svetogorska-stari-grad",
+    "fetchedAt": "2026-09-12T11:49:06.375Z"
+  },
+  "plan": {
+    "asset": "plan",
+    "pxPerMeter": 66.123,
+    "meta": {
+      "provenance": "fixture/manual@0.1",
+      "basis": "declared-area",
+      "confidence": 0.7
+    }
+  },
+  "flat": {
+    "areaDeclared": 105,
+    "roomsDeclared": 3.5,
+    "meta": {
+      "provenance": "fixture/manual@0.1",
+      "basis": "declared"
+    },
+    "defaults": {
+      "wallHeight": 2.8,
+      "doorHeight": 2.1,
+      "windowSill": 0.9,
+      "windowHeight": 1.5,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "assumed"
+      }
+    }
+  },
+  "vertices": {
+    "v1": [
+      0.136,
+      1.422
+    ],
+    "v2": [
+      3.849,
+      1.422
+    ],
+    "v3": [
+      6.821,
+      1.422
+    ],
+    "v4": [
+      6.821,
+      0.136
+    ],
+    "v5": [
+      8.787,
+      0.136
+    ],
+    "v6": [
+      13.535,
+      0.136
+    ],
+    "v7": [
+      13.535,
+      4.514
+    ],
+    "v8": [
+      13.535,
+      8.582
+    ],
+    "v9": [
+      13.535,
+      11.736
+    ],
+    "v10": [
+      9.21,
+      11.736
+    ],
+    "v11": [
+      9.21,
+      8.582
+    ],
+    "v12": [
+      8.787,
+      8.582
+    ],
+    "v13": [
+      8.787,
+      8.076
+    ],
+    "v14": [
+      4.34,
+      8.076
+    ],
+    "v15": [
+      4.34,
+      5.974
+    ],
+    "v16": [
+      2.639,
+      5.974
+    ],
+    "v17": [
+      0.136,
+      5.974
+    ],
+    "v18": [
+      0.136,
+      4.514
+    ],
+    "v19": [
+      2.639,
+      4.514
+    ],
+    "v20": [
+      3.849,
+      4.514
+    ],
+    "v21": [
+      4.34,
+      4.514
+    ],
+    "v22": [
+      6.821,
+      4.514
+    ],
+    "v23": [
+      8.787,
+      4.514
+    ],
+    "v24": [
+      6.821,
+      2.964
+    ],
+    "v25": [
+      8.787,
+      2.964
+    ]
+  },
+  "walls": {
+    "w1": {
+      "a": "v1",
+      "b": "v2",
+      "thickness": 0.26,
+      "exterior": true,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w2": {
+      "a": "v2",
+      "b": "v3",
+      "thickness": 0.26,
+      "exterior": true,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w3": {
+      "a": "v3",
+      "b": "v4",
+      "thickness": 0.26,
+      "exterior": true,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w4": {
+      "a": "v4",
+      "b": "v5",
+      "thickness": 0.26,
+      "exterior": true,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w5": {
+      "a": "v5",
+      "b": "v6",
+      "thickness": 0.26,
+      "exterior": true,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w6": {
+      "a": "v6",
+      "b": "v7",
+      "thickness": 0.26,
+      "exterior": true,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w7": {
+      "a": "v7",
+      "b": "v8",
+      "thickness": 0.26,
+      "exterior": true,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w8": {
+      "a": "v8",
+      "b": "v9",
+      "thickness": 0.26,
+      "exterior": true,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w9": {
+      "a": "v9",
+      "b": "v10",
+      "thickness": 0.26,
+      "exterior": true,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w10": {
+      "a": "v10",
+      "b": "v11",
+      "thickness": 0.26,
+      "exterior": true,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w11": {
+      "a": "v11",
+      "b": "v12",
+      "thickness": 0.13,
+      "exterior": true,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w12": {
+      "a": "v12",
+      "b": "v13",
+      "thickness": 0.26,
+      "exterior": true,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w13": {
+      "a": "v13",
+      "b": "v14",
+      "thickness": 0.26,
+      "exterior": true,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w14": {
+      "a": "v14",
+      "b": "v15",
+      "thickness": 0.26,
+      "exterior": true,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w15": {
+      "a": "v15",
+      "b": "v16",
+      "thickness": 0.13,
+      "exterior": true,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w16": {
+      "a": "v16",
+      "b": "v17",
+      "thickness": 0.26,
+      "exterior": true,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w17": {
+      "a": "v17",
+      "b": "v18",
+      "thickness": 0.26,
+      "exterior": true,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w18": {
+      "a": "v18",
+      "b": "v1",
+      "thickness": 0.26,
+      "exterior": true,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w19": {
+      "a": "v18",
+      "b": "v19",
+      "thickness": 0.13,
+      "exterior": false,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w20": {
+      "a": "v19",
+      "b": "v20",
+      "thickness": 0.13,
+      "exterior": false,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w21": {
+      "a": "v20",
+      "b": "v21",
+      "thickness": 0.13,
+      "exterior": false,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w22": {
+      "a": "v21",
+      "b": "v22",
+      "thickness": 0.13,
+      "exterior": false,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w23": {
+      "a": "v22",
+      "b": "v23",
+      "thickness": 0.13,
+      "exterior": false,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w24": {
+      "a": "v23",
+      "b": "v7",
+      "thickness": 0.13,
+      "exterior": false,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w25": {
+      "a": "v2",
+      "b": "v20",
+      "thickness": 0.13,
+      "exterior": false,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w26": {
+      "a": "v3",
+      "b": "v24",
+      "thickness": 0.26,
+      "exterior": false,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w27": {
+      "a": "v24",
+      "b": "v22",
+      "thickness": 0.26,
+      "exterior": false,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w28": {
+      "a": "v5",
+      "b": "v25",
+      "thickness": 0.13,
+      "exterior": false,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w29": {
+      "a": "v25",
+      "b": "v23",
+      "thickness": 0.13,
+      "exterior": false,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w30": {
+      "a": "v24",
+      "b": "v25",
+      "thickness": 0.13,
+      "exterior": false,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w31": {
+      "a": "v23",
+      "b": "v13",
+      "thickness": 0.26,
+      "exterior": false,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w32": {
+      "a": "v19",
+      "b": "v16",
+      "thickness": 0.13,
+      "exterior": false,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w33": {
+      "a": "v21",
+      "b": "v15",
+      "thickness": 0.13,
+      "exterior": false,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "w34": {
+      "a": "v11",
+      "b": "v8",
+      "thickness": 0.13,
+      "exterior": false,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    }
+  },
+  "openings": {
+    "o1": {
+      "wall": "w20",
+      "kind": "door",
+      "at": 0.219,
+      "width": 0.786,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.85
+      }
+    },
+    "o2": {
+      "wall": "w32",
+      "kind": "door",
+      "at": 0.507,
+      "width": 0.802,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.85
+      }
+    },
+    "o3": {
+      "wall": "w23",
+      "kind": "door",
+      "at": 0.907,
+      "width": 0.786,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.85
+      }
+    },
+    "o4": {
+      "wall": "w30",
+      "kind": "door",
+      "at": 1.013,
+      "width": 0.802,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.85
+      }
+    },
+    "o5": {
+      "wall": "w29",
+      "kind": "door",
+      "at": 0.59,
+      "width": 0.802,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.85
+      }
+    },
+    "o6": {
+      "wall": "w31",
+      "kind": "door",
+      "at": 0.779,
+      "width": 1.164,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.8
+      }
+    },
+    "o7": {
+      "wall": "w34",
+      "kind": "door",
+      "at": 1.013,
+      "width": 0.802,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.85
+      }
+    },
+    "o8": {
+      "wall": "w22",
+      "kind": "door",
+      "at": 0.06,
+      "width": 1.074,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.7,
+        "question": "открытый проход кухня ↔ столовая без полотна и дуги на плане; ширина по разрыву стены"
+      }
+    },
+    "o9": {
+      "wall": "w22",
+      "kind": "window",
+      "at": 1.134,
+      "width": 1.285,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.6,
+        "question": "белый прямоугольник на стене: по фото p4/p5/p6 барная стойка с проёмом над ней; принято как окно во внутренней стене (непроходимо)"
+      }
+    },
+    "o10": {
+      "wall": "w13",
+      "kind": "door",
+      "at": 2.919,
+      "width": 1.301,
+      "entrance": true,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "o11": {
+      "wall": "w15",
+      "kind": "door",
+      "at": 0.469,
+      "width": 0.847,
+      "passable": false,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.8
+      }
+    },
+    "o12": {
+      "wall": "w6",
+      "kind": "door",
+      "at": 0.953,
+      "width": 1.391,
+      "passable": false,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.85
+      }
+    },
+    "o13": {
+      "wall": "w18",
+      "kind": "window",
+      "at": 0.885,
+      "width": 1.21,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.8
+      }
+    },
+    "o14": {
+      "wall": "w17",
+      "kind": "window",
+      "at": 0.499,
+      "width": 0.635,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.8
+      }
+    },
+    "o15": {
+      "wall": "w2",
+      "kind": "window",
+      "at": 0.219,
+      "width": 0.726,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.8
+      }
+    },
+    "o16": {
+      "wall": "w3",
+      "kind": "window",
+      "at": 0.212,
+      "width": 0.862,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.8
+      }
+    },
+    "o17": {
+      "wall": "w7",
+      "kind": "window",
+      "at": 1.414,
+      "width": 1.21,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.8
+      }
+    },
+    "o18": {
+      "wall": "w8",
+      "kind": "window",
+      "at": 1.505,
+      "width": 1.089,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.8
+      }
+    },
+    "o19": {
+      "wall": "w14",
+      "kind": "window",
+      "at": 0.439,
+      "width": 1.059,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.8
+      }
+    },
+    "o20": {
+      "wall": "w33",
+      "kind": "door",
+      "at": 0.129,
+      "width": 1.18,
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.75,
+        "question": "арка между двумя короткими стойками стены; дуги нет, полотна нет"
+      }
+    }
+  },
+  "rooms": {
+    "r1": {
+      "anchor": [
+        11.161,
+        6.548
+      ],
+      "type": "living",
+      "label": "Гостиная",
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "r2": {
+      "anchor": [
+        6.564,
+        6.295
+      ],
+      "type": "hall",
+      "label": "Столовая и вход",
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.6,
+        "question": "столовая со входом; в enum типов нет dining — принят hall как входное распределительное помещение"
+      }
+    },
+    "r3": {
+      "anchor": [
+        5.335,
+        2.968
+      ],
+      "type": "kitchen",
+      "label": "Кухня",
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.9
+      }
+    },
+    "r4": {
+      "anchor": [
+        1.992,
+        2.968
+      ],
+      "type": "bedroom",
+      "label": "Спальня",
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.85
+      }
+    },
+    "r5": {
+      "anchor": [
+        1.388,
+        5.244
+      ],
+      "type": "bathroom",
+      "label": "Ванная",
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.85
+      }
+    },
+    "r6": {
+      "anchor": [
+        3.49,
+        5.244
+      ],
+      "type": "corridor",
+      "label": "Коридор",
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.7,
+        "question": "узкий коридор между спальней, ванной, лоджией и столовой; фотографий нет"
+      }
+    },
+    "r7": {
+      "anchor": [
+        7.804,
+        1.55
+      ],
+      "type": "bathroom",
+      "label": "Душевая",
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.85
+      }
+    },
+    "r8": {
+      "anchor": [
+        7.804,
+        3.739
+      ],
+      "type": "hall",
+      "label": "Холл",
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.7
+      }
+    },
+    "r9": {
+      "anchor": [
+        11.161,
+        2.325
+      ],
+      "type": "bedroom",
+      "label": "Спальня с террасой",
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.85
+      }
+    },
+    "r10": {
+      "anchor": [
+        11.373,
+        10.159
+      ],
+      "type": "bedroom",
+      "label": "Спальня с рабочим местом",
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.85
+      }
+    }
+  },
+  "assets": {
+    "plan": {
+      "kind": "image",
+      "url": "plan.png",
+      "width": 940,
+      "height": 786
+    },
+    "p1": {
+      "kind": "photo",
+      "url": "photos/photo-01.jpg",
+      "width": 1920,
+      "height": 1078,
+      "room": "r1",
+      "faces": "w7",
+      "look": {
+        "floor": "parquet",
+        "wallTone": "light"
+      },
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.85
+      }
+    },
+    "p2": {
+      "kind": "photo",
+      "url": "photos/photo-02.jpg",
+      "width": 1920,
+      "height": 1078,
+      "room": "r1",
+      "faces": "w31",
+      "look": {
+        "floor": "parquet",
+        "wallTone": "light"
+      },
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.8
+      }
+    },
+    "p3": {
+      "kind": "photo",
+      "url": "photos/photo-03.jpg",
+      "width": 1920,
+      "height": 1078,
+      "room": "r10",
+      "faces": "w9",
+      "look": {
+        "floor": "parquet",
+        "wallTone": "light"
+      },
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.75
+      }
+    },
+    "p4": {
+      "kind": "photo",
+      "url": "photos/photo-04.jpg",
+      "width": 1920,
+      "height": 1078,
+      "room": "r2",
+      "faces": "w14",
+      "look": {
+        "floor": "parquet",
+        "wallTone": "light"
+      },
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.8
+      }
+    },
+    "p5": {
+      "kind": "photo",
+      "url": "photos/photo-05.jpg",
+      "width": 1920,
+      "height": 1078,
+      "room": "r2",
+      "faces": "w31",
+      "look": {
+        "floor": "parquet",
+        "wallTone": "light"
+      },
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.8
+      }
+    },
+    "p6": {
+      "kind": "photo",
+      "url": "photos/photo-06.jpg",
+      "width": 1920,
+      "height": 1079,
+      "room": "r3",
+      "faces": "w27",
+      "look": {
+        "floor": "tile",
+        "wallTone": "light"
+      },
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.6
+      }
+    },
+    "p7": {
+      "kind": "photo",
+      "url": "photos/photo-07.jpg",
+      "width": 1920,
+      "height": 1078,
+      "room": "r3",
+      "faces": "w2",
+      "look": {
+        "floor": "tile",
+        "wallTone": "light"
+      },
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.75
+      }
+    },
+    "p8": {
+      "kind": "photo",
+      "url": "photos/photo-08.jpg",
+      "width": 1920,
+      "height": 1078,
+      "room": "r4",
+      "faces": "w1",
+      "look": {
+        "floor": "parquet",
+        "wallTone": "light"
+      },
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.7
+      }
+    },
+    "p9": {
+      "kind": "photo",
+      "url": "photos/photo-09.jpg",
+      "width": 1920,
+      "height": 1078,
+      "room": "r4",
+      "faces": "w18",
+      "look": {
+        "floor": "parquet",
+        "wallTone": "light"
+      },
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.7
+      }
+    },
+    "p10": {
+      "kind": "photo",
+      "url": "photos/photo-10.jpg",
+      "width": 1920,
+      "height": 1078,
+      "room": "r7",
+      "faces": "w4",
+      "look": {
+        "floor": "tile",
+        "wallTone": "light"
+      },
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.8
+      }
+    },
+    "p11": {
+      "kind": "photo",
+      "url": "photos/photo-11.jpg",
+      "width": 1078,
+      "height": 1920,
+      "room": "r8",
+      "faces": "w30",
+      "look": {
+        "floor": "parquet",
+        "wallTone": "light"
+      },
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.55,
+        "question": "коридор: дверь душевой впереди, дверь спальни справа; слева дверь с фрамугой, которой нет на плане"
+      }
+    },
+    "p12": {
+      "kind": "photo",
+      "url": "photos/photo-12.jpg",
+      "width": 1920,
+      "height": 1078,
+      "room": "r9",
+      "faces": "w6",
+      "look": {
+        "floor": "parquet",
+        "wallTone": "light"
+      },
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.85
+      }
+    },
+    "p13": {
+      "kind": "photo",
+      "url": "photos/photo-13.jpg",
+      "width": 1920,
+      "height": 1078,
+      "room": "r9",
+      "faces": "w29",
+      "look": {
+        "floor": "parquet",
+        "wallTone": "light"
+      },
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.8
+      }
+    },
+    "p14": {
+      "kind": "photo",
+      "url": "photos/photo-14.jpg",
+      "width": 1920,
+      "height": 1078,
+      "room": "r5",
+      "faces": "w17",
+      "look": {
+        "floor": "tile",
+        "wallTone": "light"
+      },
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.8
+      }
+    },
+    "p15": {
+      "kind": "photo",
+      "url": "photos/photo-15.jpg",
+      "width": 1920,
+      "height": 1078,
+      "room": "r5",
+      "faces": "w17",
+      "look": {
+        "floor": "tile",
+        "wallTone": "light"
+      },
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.75
+      }
+    },
+    "p16": {
+      "kind": "photo",
+      "url": "photos/photo-16.jpg",
+      "width": 1920,
+      "height": 1078,
+      "room": "r10",
+      "faces": "w10",
+      "look": {
+        "floor": "parquet",
+        "wallTone": "light"
+      },
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.75
+      }
+    },
+    "p17": {
+      "kind": "photo",
+      "url": "photos/photo-17.jpg",
+      "width": 1920,
+      "height": 1078,
+      "room": "r1",
+      "faces": "w12",
+      "look": {
+        "floor": "parquet",
+        "wallTone": "light"
+      },
+      "meta": {
+        "provenance": "fixture/manual@0.1",
+        "basis": "inferred",
+        "confidence": 0.7
+      }
+    }
+  }
+}

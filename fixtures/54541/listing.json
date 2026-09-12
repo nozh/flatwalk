@@ -1,0 +1,139 @@
+{
+  "source": {
+    "site": "cityexpert",
+    "url": "https://cityexpert.rs/izdavanje-nekretnina/beograd/54541/troiposoban-stan-svetogorska-stari-grad",
+    "fetchedAt": "2026-09-12T11:49:06.375Z",
+    "listingId": "54541"
+  },
+  "title": "Svetogorska [Centar](https://cityexpert.rs/izdavanje-nekretnina/beograd?polygonsArray=Centar), [Stari grad](https://cityexpert.rs/izdavanje-nekretnina/beograd?polygonsArray=Stari%20grad) Izdavanje Stanova Beograd • ID54541",
+  "areaSqm": 105,
+  "roomsLabel": "##### Troiposoban",
+  "assets": {
+    "plan": {
+      "id": "plan",
+      "kind": "plan",
+      "sourceUrl": "https://img.cityexpert.rs/properties/1920x/54000/54541/tlocrt/54541_-_ground_floor.png",
+      "localPath": "/Users/nozh/dev/hackatons/grokbotsebia/ideas/flatwalk/code/flatwalk-repo/data/54541/plan.png",
+      "bytes": 51354
+    },
+    "p1": {
+      "id": "p1",
+      "kind": "photo",
+      "sourceUrl": "https://img.cityexpert.rs/properties/1920x/54000/54541/slike/cityexpert.rs_-_nekretnina_id_-_54541_-_0214_-_20230225.jpg",
+      "localPath": "/Users/nozh/dev/hackatons/grokbotsebia/ideas/flatwalk/code/flatwalk-repo/data/54541/photo-01.jpg",
+      "bytes": 245444
+    },
+    "p2": {
+      "id": "p2",
+      "kind": "photo",
+      "sourceUrl": "https://img.cityexpert.rs/properties/1920x/54000/54541/slike/cityexpert.rs_-_nekretnina_id_-_54541_-_0215_-_20230225.jpg",
+      "localPath": "/Users/nozh/dev/hackatons/grokbotsebia/ideas/flatwalk/code/flatwalk-repo/data/54541/photo-02.jpg",
+      "bytes": 226522
+    },
+    "p3": {
+      "id": "p3",
+      "kind": "photo",
+      "sourceUrl": "https://img.cityexpert.rs/properties/1920x/54000/54541/slike/cityexpert.rs_-_nekretnina_id_-_54541_-_0212_-_20230225.jpg",
+      "localPath": "/Users/nozh/dev/hackatons/grokbotsebia/ideas/flatwalk/code/flatwalk-repo/data/54541/photo-03.jpg",
+      "bytes": 194944
+    },
+    "p4": {
+      "id": "p4",
+      "kind": "photo",
+      "sourceUrl": "https://img.cityexpert.rs/properties/1920x/54000/54541/slike/cityexpert.rs_-_nekretnina_id_-_54541_-_0217_-_20230225.jpg",
+      "localPath": "/Users/nozh/dev/hackatons/grokbotsebia/ideas/flatwalk/code/flatwalk-repo/data/54541/photo-04.jpg",
+      "bytes": 212269
+    },
+    "p5": {
+      "id": "p5",
+      "kind": "photo",
+      "sourceUrl": "https://img.cityexpert.rs/properties/1920x/54000/54541/slike/cityexpert.rs_-_nekretnina_id_-_54541_-_0218_-_20230225.jpg",
+      "localPath": "/Users/nozh/dev/hackatons/grokbotsebia/ideas/flatwalk/code/flatwalk-repo/data/54541/photo-05.jpg",
+      "bytes": 208311
+    },
+    "p6": {
+      "id": "p6",
+      "kind": "photo",
+      "sourceUrl": "https://img.cityexpert.rs/properties/1920x/54000/54541/slike/cityexpert.rs_-_nekretnina_id_-_54541_-_0220_-_20230225.jpg",
+      "localPath": "/Users/nozh/dev/hackatons/grokbotsebia/ideas/flatwalk/code/flatwalk-repo/data/54541/photo-06.jpg",
+      "bytes": 166705
+    },
+    "p7": {
+      "id": "p7",
+      "kind": "photo",
+      "sourceUrl": "https://img.cityexpert.rs/properties/1920x/54000/54541/slike/cityexpert.rs_-_nekretnina_id_-_54541_-_0219_-_20230225.jpg",
+      "localPath": "/Users/nozh/dev/hackatons/grokbotsebia/ideas/flatwalk/code/flatwalk-repo/data/54541/photo-07.jpg",
+      "bytes": 150202
+    },
+    "p8": {
+      "id": "p8",
+      "kind": "photo",
+      "sourceUrl": "https://img.cityexpert.rs/properties/1920x/54000/54541/slike/cityexpert.rs_-_nekretnina_id_-_54541_-_0222_-_20230225.jpg",
+      "localPath": "/Users/nozh/dev/hackatons/grokbotsebia/ideas/flatwalk/code/flatwalk-repo/data/54541/photo-08.jpg",
+      "bytes": 173555
+    },
+    "p9": {
+      "id": "p9",
+      "kind": "photo",
+      "sourceUrl": "https://img.cityexpert.rs/properties/1920x/54000/54541/slike/cityexpert.rs_-_nekretnina_id_-_54541_-_0223_-_20230225.jpg",
+      "localPath": "/Users/nozh/dev/hackatons/grokbotsebia/ideas/flatwalk/code/flatwalk-repo/data/54541/photo-09.jpg",
+      "bytes": 176825
+    },
+    "p10": {
+      "id": "p10",
+      "kind": "photo",
+      "sourceUrl": "https://img.cityexpert.rs/properties/1920x/54000/54541/slike/cityexpert.rs_-_nekretnina_id_-_54541_-_0224_-_20230225.jpg",
+      "localPath": "/Users/nozh/dev/hackatons/grokbotsebia/ideas/flatwalk/code/flatwalk-repo/data/54541/photo-10.jpg",
+      "bytes": 168046
+    },
+    "p11": {
+      "id": "p11",
+      "kind": "photo",
+      "sourceUrl": "https://img.cityexpert.rs/properties/1920x/54000/54541/slike/cityexpert.rs_-_nekretnina_id_-_54541_-_0221_-_20230225.jpg",
+      "localPath": "/Users/nozh/dev/hackatons/grokbotsebia/ideas/flatwalk/code/flatwalk-repo/data/54541/photo-11.jpg",
+      "bytes": 159485
+    },
+    "p12": {
+      "id": "p12",
+      "kind": "photo",
+      "sourceUrl": "https://img.cityexpert.rs/properties/1920x/54000/54541/slike/cityexpert.rs_-_nekretnina_id_-_54541_-_0225_-_20230225.jpg",
+      "localPath": "/Users/nozh/dev/hackatons/grokbotsebia/ideas/flatwalk/code/flatwalk-repo/data/54541/photo-12.jpg",
+      "bytes": 237846
+    },
+    "p13": {
+      "id": "p13",
+      "kind": "photo",
+      "sourceUrl": "https://img.cityexpert.rs/properties/1920x/54000/54541/slike/cityexpert.rs_-_nekretnina_id_-_54541_-_0226_-_20230225.jpg",
+      "localPath": "/Users/nozh/dev/hackatons/grokbotsebia/ideas/flatwalk/code/flatwalk-repo/data/54541/photo-13.jpg",
+      "bytes": 220943
+    },
+    "p14": {
+      "id": "p14",
+      "kind": "photo",
+      "sourceUrl": "https://img.cityexpert.rs/properties/1920x/54000/54541/slike/cityexpert.rs_-_nekretnina_id_-_54541_-_0227_-_20230225.jpg",
+      "localPath": "/Users/nozh/dev/hackatons/grokbotsebia/ideas/flatwalk/code/flatwalk-repo/data/54541/photo-14.jpg",
+      "bytes": 178311
+    },
+    "p15": {
+      "id": "p15",
+      "kind": "photo",
+      "sourceUrl": "https://img.cityexpert.rs/properties/1920x/54000/54541/slike/cityexpert.rs_-_nekretnina_id_-_54541_-_0228_-_20230225.jpg",
+      "localPath": "/Users/nozh/dev/hackatons/grokbotsebia/ideas/flatwalk/code/flatwalk-repo/data/54541/photo-15.jpg",
+      "bytes": 157358
+    },
+    "p16": {
+      "id": "p16",
+      "kind": "photo",
+      "sourceUrl": "https://img.cityexpert.rs/properties/1920x/54000/54541/slike/cityexpert.rs_-_nekretnina_id_-_54541_-_0213_-_20230225.jpg",
+      "localPath": "/Users/nozh/dev/hackatons/grokbotsebia/ideas/flatwalk/code/flatwalk-repo/data/54541/photo-16.jpg",
+      "bytes": 202800
+    },
+    "p17": {
+      "id": "p17",
+      "kind": "photo",
+      "sourceUrl": "https://img.cityexpert.rs/properties/1920x/54000/54541/slike/cityexpert.rs_-_nekretnina_id_-_54541_-_0216_-_20230225.jpg",
+      "localPath": "/Users/nozh/dev/hackatons/grokbotsebia/ideas/flatwalk/code/flatwalk-repo/data/54541/photo-17.jpg",
+      "bytes": 203481
+    }
+  }
+}

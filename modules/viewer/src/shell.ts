@@ -5,7 +5,7 @@ import type { ReportResult } from './load-report';
 import { buildOverlay, renderOverlaySvg } from './plan-overlay';
 import { renderAbout, renderAssumptionStrip, renderLightbox, renderRoomList, renderRoomPanel, renderStageStatus, renderWalkHud, walkTitle } from './panels';
 import { walkVerification } from './report-status';
-import { DEMO_DISCLOSURE, SYNTHETIC_DISCLOSURE, isSyntheticModel } from './demo-flags';
+import { DEMO_DISCLOSURE, SYNTHETIC_DISCLOSURE, SYNTHETIC_FIXTURE_DISCLOSURE, isSyntheticModel } from './demo-flags';
 import type { WalkPrep } from './walk-prep';
 import { escapeHtml, icon } from './html';
 
@@ -13,12 +13,22 @@ export type ViewerState =
   | { kind: 'loading'; demo?: boolean }
   | { kind: 'missing'; source: DataSource; url: string; demo?: boolean }
   | { kind: 'invalid'; issues: string[]; demo?: boolean }
-  | { kind: 'ready'; model: FlatModel; source: DataSource; plan: { status: 'ok' | 'unavailable' }; report?: ReportResult; prep?: WalkPrep; demo?: boolean };
+  | {
+      kind: 'ready';
+      model: FlatModel;
+      source: DataSource;
+      plan: { status: 'ok' | 'unavailable' };
+      report?: ReportResult;
+      prep?: WalkPrep;
+      demo?: boolean;
+      syntheticFixture?: boolean;
+    };
 
 const NO_REPORT: ReportResult = { status: 'missing', url: '' };
 
-function disclosureBanner(demo: boolean | undefined, synthetic: boolean): string {
+function disclosureBanner(demo: boolean | undefined, synthetic: boolean, syntheticFixture = false): string {
   if (synthetic) return `<div class="demo-disclosure is-synthetic" role="note">${escapeHtml(SYNTHETIC_DISCLOSURE)}</div>`;
+  if (syntheticFixture) return `<div class="demo-disclosure is-synthetic" role="note">${escapeHtml(SYNTHETIC_FIXTURE_DISCLOSURE)}</div>`;
   if (!demo) return '';
   return `<div class="demo-disclosure" role="note">${escapeHtml(DEMO_DISCLOSURE)}</div>`;
 }
@@ -36,6 +46,11 @@ export function renderShell(state: ViewerState): string {
   }
 
   if (state.kind === 'missing') {
+    if (state.source.kind === 'job') {
+      return page('missing', `<h1>Job model not found</h1>
+        <p>The job API did not return a FlatModel at <code>${escapeHtml(state.url)}</code>. Source materials from the job stay on the job page; this screen does not substitute the prepared 54541 demo.</p>
+        <p class="actions"><a class="button" href="./">Start another job</a><a class="button is-secondary" href="?src=fixture&demo=1">Open prepared demo</a></p>`, state.demo);
+    }
     if (state.source.kind === 'fixture') {
       return page('missing', `<h1>Reference model 54541 is unavailable</h1>
         <p>The file <code>${escapeHtml(state.url)}</code> is not available next to Viewer. The reference is produced separately and is not replaced with test data.</p>
@@ -61,11 +76,20 @@ export function renderShell(state: ViewerState): string {
     ? `<div class="stage-empty"><p>The source floor plan is unavailable and the model has no geometry yet.</p><p class="muted">An annotated floor plan will appear here when Parser returns the walls.</p></div>`
     : renderOverlaySvg(overlay);
   const synthetic = isSyntheticModel(state.model);
-  const sourceChip = synthetic ? 'Test model, not a listing' : state.source.kind === 'fixture' ? 'Reference 54541' : 'Run folder';
+  const syntheticFixture = Boolean(state.syntheticFixture) && !synthetic;
+  const sourceChip = synthetic
+    ? 'Test model, not a listing'
+    : syntheticFixture
+      ? 'Fixture job, synthetic geometry'
+      : state.source.kind === 'fixture'
+        ? 'Prepared demo 54541'
+        : state.source.kind === 'job'
+          ? 'Job result'
+          : 'Run folder';
   const prep = state.prep;
   const hasScene = Boolean(prep?.scene);
-  const walkable = Boolean(prep?.walk.available);
   const verification = walkVerification(report);
+  const walkable = Boolean(prep?.walk.available) && verification.level !== 'not-ready';
   const walkLabel = walkTitle(verification);
   const walkHint = !prep
     ? 'after the 3D scene is built'
@@ -80,8 +104,8 @@ export function renderShell(state: ViewerState): string {
     ? `<a class="topbar-link" href="${escapeHtml(view.source.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(view.source.siteLabel)}${icon('external')}</a>`
     : `<span>${escapeHtml(view.source.siteLabel)}</span>`;
 
-  return `<div class="app" data-view="plan" data-marks="on"${state.demo || synthetic ? ' data-demo="1"' : ''}>
-    ${disclosureBanner(state.demo, synthetic)}
+  return `<div class="app" data-view="plan" data-marks="on"${state.demo || synthetic || syntheticFixture ? ' data-demo="1"' : ''}>
+    ${disclosureBanner(state.demo, synthetic, syntheticFixture)}
     <header class="topbar">
       <a class="brand" href="./">FlatWalk</a>
       <div class="topbar-title">
@@ -125,7 +149,7 @@ export function renderShell(state: ViewerState): string {
       </aside>
     </main>
     <footer class="assumptions" id="assumption-strip">${renderAssumptionStrip(view, report)}</footer>
-    <dialog class="dialog about" id="about-dialog" aria-labelledby="about-title">${renderAbout(view, report, state.source, prep, { demo: Boolean(state.demo), synthetic })}</dialog>
+    <dialog class="dialog about" id="about-dialog" aria-labelledby="about-title">${renderAbout(view, report, state.source, prep, { demo: Boolean(state.demo), synthetic, syntheticFixture })}</dialog>
     <dialog class="lightbox" id="lightbox" aria-label="Photo">${renderLightbox()}</dialog>
   </div>`;
 }

@@ -1,16 +1,15 @@
 import { spawn } from "node:child_process";
 import { createServer, type Server } from "node:http";
-import { access } from "node:fs/promises";
+import { access, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { CliError, EXIT } from "./errors.ts";
 import { handleJobHttp } from "./job-http.ts";
-import { requireRunDir } from "./layout.ts";
 import { repoRoot } from "./paths.ts";
 
 export const VIEWER_DEV_URL = "http://127.0.0.1:5173/";
 export const JOB_API_PORT = 8787;
 
-export function viewerDevCommand(runDir: string): {
+export function viewerDevCommand(runDir: string, jobApiUrl = `http://127.0.0.1:${JOB_API_PORT}`): {
   cwd: string;
   runDir: string;
   url: string;
@@ -22,7 +21,7 @@ export function viewerDevCommand(runDir: string): {
     cwd,
     runDir: abs,
     url: VIEWER_DEV_URL,
-    shell: `FLATWALK_RUN=${abs} npm run dev`,
+    shell: `VITE_JOB_API_URL=${jobApiUrl} FLATWALK_RUN=${abs} npm run dev`,
   };
 }
 
@@ -46,18 +45,23 @@ export function startJobApiServer(jobsRoot: string, env: NodeJS.Dict<string> = p
 }
 
 export async function runServe(runDir: string, options: { start: boolean }): Promise<void> {
-  const paths = await requireRunDir(runDir);
-  printViewerOpen(paths.root);
+  const abs = path.resolve(runDir);
+  await mkdir(abs, { recursive: true });
+  const port = Number(process.env.FLATWALK_JOB_API_PORT ?? JOB_API_PORT);
+  const jobApiUrl = `http://127.0.0.1:${port}`;
+  printViewerOpen(abs);
+  console.log(`serve: local form uses ${jobApiUrl}; public Render must not point at this host`);
   if (!options.start) {
     console.log("serve: Viewer not started from this command. Start with: serve <dir> (omit --print-cmd).");
-    console.log("serve: job API starts only with serve (not --print-cmd); Open prepared demo is Viewer ?src=fixture");
+    console.log(`serve: ${viewerDevCommand(abs, jobApiUrl).shell}`);
     return;
   }
 
-  const jobsRoot = process.env.FLATWALK_JOBS_ROOT ?? path.join(paths.root, "..");
+  const jobsRoot = process.env.FLATWALK_JOBS_ROOT ?? abs;
+  await mkdir(jobsRoot, { recursive: true });
   const jobServer = startJobApiServer(path.resolve(jobsRoot));
 
-  const cmd = viewerDevCommand(paths.root);
+  const cmd = viewerDevCommand(abs, jobApiUrl);
   try {
     await access(path.join(cmd.cwd, "package.json"));
   } catch {
@@ -71,7 +75,7 @@ export async function runServe(runDir: string, options: { start: boolean }): Pro
   await new Promise<void>((resolve, reject) => {
     const child = spawn("npm", ["run", "dev"], {
       cwd: cmd.cwd,
-      env: { ...process.env, FLATWALK_RUN: cmd.runDir },
+      env: { ...process.env, FLATWALK_RUN: cmd.runDir, VITE_JOB_API_URL: jobApiUrl },
       stdio: "inherit",
     });
     child.on("error", (error) => {

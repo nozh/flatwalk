@@ -18,4 +18,14 @@ describe('static / fixture source', () => {
     expect(resolveAssetUrl({ kind: 'fixture' }, 'plan.png')).toBe('/fixtures/54541/plan.png');
     expect(resolveAssetUrl({ kind: 'fixture' }, '/already/absolute.png')).toBe('/already/absolute.png');
   });
+
+  it('points job models and materials at the job API origin, not Viewer localhost static paths', () => {
+    const source = { kind: 'job' as const, origin: 'http://127.0.0.1:8787', jobId: 'abc' };
+    expect(dataSourceFromSearch('?job=abc', 'http://127.0.0.1:8787')).toEqual(source);
+    expect(modelUrl(source)).toBe('http://127.0.0.1:8787/api/jobs/abc/file/model/latest.json');
+    expect(resolveAssetUrl(source, 'materials/plan.png')).toBe('http://127.0.0.1:8787/api/jobs/abc/file/materials/plan.png');
+    expect(resolveAssetUrl(source, '/api/jobs/abc/file/materials/photos/p1.jpg')).toBe(
+      'http://127.0.0.1:8787/api/jobs/abc/file/materials/photos/p1.jpg',
+    );
+  });
 });

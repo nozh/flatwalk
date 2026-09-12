@@ -206,21 +206,27 @@ export function renderAbout(
   report: ReportResult,
   source: DataSource,
   prep?: WalkPrep,
-  options: { demo?: boolean; synthetic?: boolean } = {},
+  options: { demo?: boolean; synthetic?: boolean; syntheticFixture?: boolean } = {},
 ): string {
-  const link = view.source.url && !options.synthetic
+  const link = view.source.url && !options.synthetic && !options.syntheticFixture
     ? ` <a href="${escapeHtml(view.source.url)}" target="_blank" rel="noopener noreferrer">Open listing${icon('external')}</a>`
     : '';
   const demoNote = options.synthetic
     ? '<p><b>This is Viewer test data, not a listing apartment.</b> It must not be presented as CityExpert 54541.</p>'
-    : options.demo
-      ? '<p><b>Prepared demo of reference 54541.</b> The listing URL is not fetched or recognized in this static showcase.</p>'
-      : '';
+    : options.syntheticFixture
+      ? '<p><b>Synthetic fixture geometry.</b> grok-rects placeholder rooms, not recognition of listing 54541. Listing photos shown beside this model are source materials only.</p>'
+      : options.demo
+        ? '<p><b>Prepared demo of reference 54541.</b> The listing URL is not fetched or recognized in this static showcase.</p>'
+        : '';
   const mode = options.synthetic
     ? 'Static mode: synthetic Viewer test model. Changes are not saved and Convex is not connected.'
-    : source.kind === 'fixture'
-      ? 'Static mode: bundled reference model 54541. Changes are not saved and Convex is not connected.'
-      : 'Static mode: model loaded from the run folder. Changes are not saved and Convex is not connected.';
+    : options.syntheticFixture
+      ? 'Job result: fixture adapters produced synthetic grok-rects geometry. Changes are not saved. Listing photos were not used to infer these walls.'
+      : source.kind === 'fixture'
+        ? 'Static mode: bundled prepared demo of reference 54541. Changes are not saved and Convex is not connected.'
+        : source.kind === 'job'
+          ? 'Job result loaded from the local job API. Changes are not saved and Convex is not connected.'
+          : 'Static mode: model loaded from the run folder. Changes are not saved and Convex is not connected.';
   const questions = view.questions.length
     ? `<ul class="about-questions">${view.questions.map((question) => `<li><b>${escapeHtml(question.subject)}.</b> ${escapeHtml(question.text)}</li>`).join('')}</ul>`
     : '<p>No open questions.</p>';

@@ -1,6 +1,7 @@
 import { ValidationReportSchema, type ValidationReport } from '@flatwalk/contract';
 import { assetBase, type DataSource } from './source';
 import { defaultFetchJson, formatIssues, type FetchJson } from './load-model';
+import type { JobSnapshot } from './job-api';
 
 export type ReportResult =
   | { status: 'ok'; report: ValidationReport; url: string }
@@ -32,4 +33,15 @@ export async function loadValidationReport(
   const report = parsed.data;
   if (report.modelId !== model.id || report.revision !== model.revision) return { status: 'stale', report, url };
   return { status: 'ok', report, url };
+}
+
+export function reportFromSnapshot(snapshot: JobSnapshot, model: { id: string; revision: number }): ReportResult {
+  const url = snapshot.job.id ? `job:${snapshot.job.id}` : '';
+  if (!snapshot.report) return { status: 'missing', url };
+  const parsed = ValidationReportSchema.safeParse(snapshot.report);
+  if (!parsed.success) return { status: 'invalid', url, issues: formatIssues(parsed.error) };
+  if (parsed.data.modelId !== model.id || parsed.data.revision !== model.revision) {
+    return { status: 'stale', report: parsed.data, url };
+  }
+  return { status: 'ok', report: parsed.data, url };
 }

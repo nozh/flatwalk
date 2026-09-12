@@ -18,6 +18,8 @@ describe('reportUrl', () => {
   it('points at the run folder or the bundled fixture with a zero-padded revision', () => {
     expect(reportUrl({ kind: 'static' }, 1)).toBe('/validation/rev-001.json');
     expect(reportUrl({ kind: 'fixture' }, 0)).toBe('/fixtures/54541/validation/rev-000.json');
+    expect(reportUrl({ kind: 'job', origin: 'http://127.0.0.1:8787', jobId: 'abc' }, 1))
+      .toBe('http://127.0.0.1:8787/api/jobs/abc/file/validation/rev-001.json');
   });
 });
 

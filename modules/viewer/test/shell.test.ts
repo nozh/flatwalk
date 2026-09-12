@@ -138,4 +138,35 @@ describe('renderShell with a validation report', () => {
     expect(root.querySelector('#walk-hint')?.textContent).toContain('clearance is unverified');
     expect(root.querySelector('#hud-verification')?.textContent).toContain('Room connectivity is verified. Clearance is not verified.');
   });
+
+  it('does not call the walkthrough ready and keeps overview when geometry checks failed', () => {
+    const parsed = model(reference);
+    const report = {
+      status: 'ok' as const, url: 'job:x',
+      report: {
+        schemaVersion: '0.1' as const, modelId: parsed.id, revision: parsed.revision, walkReady: false, confirmation: 0.1,
+        checks: [
+          { checkId: 'navigation.reachable', layer: 'navigation' as const, status: 'fail' as const, severity: 'error' as const, entities: [], message: 'kitchen is unreachable' },
+          { checkId: 'navigation.start', layer: 'navigation' as const, status: 'pass' as const, severity: 'error' as const, entities: [], message: 'ok' },
+          { checkId: 'navigation.clearance', layer: 'navigation' as const, status: 'skipped' as const, severity: 'info' as const, entities: [], message: 'skipped' },
+        ],
+        review: { items: [] },
+      },
+    };
+    const root = mount(renderShell({
+      kind: 'ready',
+      model: parsed,
+      source: { kind: 'job', origin: 'http://127.0.0.1:8787', jobId: 'x' },
+      plan: { status: 'unavailable' },
+      prep: prepareWalk(parsed),
+      report,
+      syntheticFixture: true,
+    }));
+    expect(root.textContent).toMatch(/Synthetic fixture geometry/);
+    expect(root.textContent).not.toMatch(/Walkthrough is ready/i);
+    expect(root.querySelector('button[data-action="walk"]')?.textContent).toContain('Trial walkthrough');
+    expect(root.querySelector<HTMLButtonElement>('button[data-action="walk"]')?.disabled).toBe(true);
+    expect(root.querySelector<HTMLButtonElement>('button[data-view="scene"]')?.disabled).toBe(false);
+    expect(root.querySelector('#about-dialog')?.textContent).toMatch(/source materials only/i);
+  });
 });

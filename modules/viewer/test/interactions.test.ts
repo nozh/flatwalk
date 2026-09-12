@@ -92,8 +92,8 @@ describe('gallery', () => {
     const lightbox = root.querySelector<HTMLDialogElement>('#lightbox');
     expect(lightbox?.open).toBe(true);
     expect(root.querySelector('#lightbox-image')?.getAttribute('src')).toContain('photo-01.jpg');
-    expect(root.querySelector('#lightbox-caption')?.textContent).toContain('Фото 1 из 3');
-    expect(root.querySelector('#lightbox-caption')?.textContent).toContain('Гостиная');
+    expect(root.querySelector('#lightbox-caption')?.textContent).toContain('Гостиная, 1 из 3');
+    expect(root.querySelector('#lightbox-caption')?.textContent).toContain('фото 1');
     key(document, 'ArrowRight');
     expect(root.querySelector('#lightbox-image')?.getAttribute('src')).toContain('photo-02.jpg');
     key(document, 'ArrowLeft');

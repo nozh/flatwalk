@@ -239,10 +239,10 @@ export function renderStageStatus(activeView: 'plan' | 'scene', mode: Overlay['m
 
 export function renderLightbox(): string {
   return `<button type="button" class="icon-button lightbox-close" data-action="lightbox-close" aria-label="Закрыть">${icon('close')}</button>
-    <button type="button" class="icon-button lightbox-nav lightbox-prev" data-action="lightbox-prev" aria-label="Предыдущее фото">${icon('prev')}</button>
+    <button type="button" class="icon-button lightbox-nav lightbox-prev" data-action="lightbox-prev" aria-label="Предыдущее фото">${icon('left')}</button>
     <figure class="lightbox-figure">
       <img id="lightbox-image" alt="" />
       <figcaption id="lightbox-caption"></figcaption>
     </figure>
-    <button type="button" class="icon-button lightbox-nav lightbox-next" data-action="lightbox-next" aria-label="Следующее фото">${icon('next')}</button>`;
+    <button type="button" class="icon-button lightbox-nav lightbox-next" data-action="lightbox-next" aria-label="Следующее фото">${icon('right')}</button>`;
 }

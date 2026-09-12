@@ -50,7 +50,7 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: { mount
   let galleryIndex = 0;
   let activeView: 'plan' | 'scene' = 'plan';
   let scene: { dispose(): void } | undefined;
-  let shown: { set: PhotoView[]; index: number } | null = null;
+  let shown: { set: PhotoView[]; index: number; scope: string | null } | null = null;
   let toastTimer: number | undefined;
 
   const currentSet = () => photosFor(view, selected);
@@ -81,6 +81,9 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: { mount
     if (roomList) roomList.innerHTML = renderRoomList(view, selected);
     if (panel) panel.innerHTML = renderRoomPanel(view, selected);
     updateMarks();
+    if (selected !== 'all' && panel && typeof panel.scrollIntoView === 'function') {
+      panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
   }
 
   function pick(index: number): void {
@@ -97,8 +100,9 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: { mount
     if (!photo) return;
     lightboxImage.src = photo.url;
     lightboxImage.alt = photo.roomLabel ? `Фото ${photo.number}, ${photo.roomLabel}` : `Фото ${photo.number}`;
-    const parts = [`Фото ${photo.number} из ${shown.set.length}`];
-    if (photo.roomLabel) parts.push(photo.roomLabel);
+    const parts = shown.scope
+      ? [`${shown.scope}, ${shown.index + 1} из ${shown.set.length}`, `фото ${photo.number}`]
+      : [`Фото ${photo.number} из ${shown.set.length}`, ...(photo.roomLabel ? [photo.roomLabel] : [])];
     if (photo.lookLabel) parts.push(photo.lookLabel);
     const question = photo.question ? ` Вопрос модели: ${photo.question}` : '';
     lightboxCaption.textContent = `${parts.join(', ')}.${question}`;
@@ -107,7 +111,8 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: { mount
 
   function openLightbox(set: PhotoView[], index: number): void {
     if (!set.length) return;
-    shown = { set, index: wrap(index, set.length) };
+    const scope = selected === 'all' ? null : view.rooms.find((room) => room.id === selected)?.label ?? null;
+    shown = { set, index: wrap(index, set.length), scope };
     renderLightbox();
     showDialog(lightbox);
   }

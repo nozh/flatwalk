@@ -112,9 +112,12 @@ export type OverlayOptions = { selectedRoom?: string | null; facedWalls?: string
 export function renderOverlaySvg(overlay: Overlay, options: OverlayOptions = {}): string {
   const [vx, vy, vw, vh] = overlay.viewBox;
   const faced = new Set(options.facedWalls ?? []);
-  const unit = overlay.mode === 'scheme' ? SCHEME_SCALE : Math.max(vw, vh) / 14;
+  // Sizes follow the drawing, not the pixel count, so an 80 px demo plan and a 940 px scan read the same.
+  const unit = Math.max(vw, vh) / 14;
   const labelSize = round(unit * 0.23);
   const pin = round(unit * 0.1);
+  const halo = round(labelSize * 0.28);
+  const ring = round(pin * 0.38);
 
   const image = overlay.image
     ? `<image href="${escapeXml(overlay.image.url)}" x="0" y="0" width="${overlay.image.width}" height="${overlay.image.height}" preserveAspectRatio="none" />`
@@ -135,7 +138,7 @@ export function renderOverlaySvg(overlay: Overlay, options: OverlayOptions = {})
     ? (() => {
       const mx = (entrance.x1 + entrance.x2) / 2;
       const my = (entrance.y1 + entrance.y2) / 2;
-      return `<g class="overlay-entrance" transform="translate(${round(mx)} ${round(my)})"><circle r="${round(pin * 0.9)}" /><text y="${round(pin * 2.4)}" font-size="${round(labelSize * 0.85)}" text-anchor="middle">вход</text></g>`;
+      return `<g class="overlay-entrance" transform="translate(${round(mx)} ${round(my)})"><circle r="${round(pin * 0.9)}" stroke-width="${ring}" /><text y="${round(pin * 2.4)}" font-size="${round(labelSize * 0.85)}" stroke-width="${halo}" text-anchor="middle">вход</text></g>`;
     })()
     : '';
 

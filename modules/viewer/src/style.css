@@ -84,7 +84,8 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible, summary:focus-v
 }
 .topbar-title { display: flex; align-items: baseline; gap: 18px; flex: 1; min-width: 0; }
 .topbar h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.45px; margin: 0; white-space: nowrap; }
-.topbar-meta { margin: 0; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 10px; min-width: 0; }
+.topbar-meta { margin: 0; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
+.topbar-meta > span { white-space: nowrap; }
 .topbar-link { display: inline-flex; align-items: center; gap: 4px; color: var(--text); text-decoration: none; font-weight: 600; }
 .topbar-link:hover { color: var(--green); }
 .topbar-link .icon { width: 14px; height: 14px; }
@@ -149,6 +150,8 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible, summary:focus-v
 .stage-plan { position: absolute; inset: 0; display: grid; place-items: center; }
 .plan-overlay { width: 100%; height: 100%; display: block; }
 .plan-overlay.is-scheme { padding: 4%; background: #fff; border-radius: 10px; border: 1px solid var(--line); }
+.plan-overlay.is-scheme .overlay-wall { stroke-opacity: 1; }
+.plan-overlay.is-scheme .overlay-wall.is-interior { stroke-opacity: 0.85; }
 .stage-empty {
   position: absolute; inset: 0; display: grid; place-content: center; text-align: center;
   padding: 24px; border: 1px dashed #c9cfc2; border-radius: 10px; color: var(--text); font-size: 15px;
@@ -158,25 +161,26 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible, summary:focus-v
 /* model marks drawn over the plan */
 .overlay-wall { stroke: var(--green); stroke-opacity: 0.5; stroke-linecap: butt; transition: stroke-opacity 0.18s, stroke 0.18s; }
 .overlay-wall.is-interior { stroke-opacity: 0.38; }
-.overlay-wall.is-faced { stroke-opacity: 0.95; }
-.overlay-wall.is-hot { stroke: #9cc255; stroke-opacity: 1; }
+.overlay-wall.is-faced { stroke: #6fae62; stroke-opacity: 1; }
+.overlay-wall.is-hot { stroke: #b9d94f; stroke-opacity: 1; }
 .overlay-opening { stroke-linecap: butt; }
 .overlay-opening.is-door { stroke: var(--lime); }
 .overlay-opening.is-door.is-glazed { stroke: #d7e4e6; }
 .overlay-opening.is-window { stroke: #ffffff; stroke-opacity: 0.95; }
-.overlay-entrance circle { fill: var(--green); stroke: #fff; stroke-width: 2px; }
-.overlay-entrance text { fill: var(--green-ink); font-weight: 700; paint-order: stroke; stroke: #fff; stroke-width: 3px; stroke-linejoin: round; }
+.overlay-entrance circle { fill: var(--green); stroke: #fff; }
+.overlay-entrance text { fill: var(--green-ink); font-weight: 700; paint-order: stroke; stroke: #fff; stroke-linejoin: round; }
 .overlay-room { cursor: pointer; outline: none; }
 .overlay-room-halo { fill: var(--green); fill-opacity: 0; transition: fill-opacity 0.18s; }
 .overlay-room:hover .overlay-room-halo, .overlay-room:focus-visible .overlay-room-halo { fill-opacity: 0.08; }
 .overlay-room.is-selected .overlay-room-halo { fill-opacity: 0.16; }
-.overlay-room-pin { fill: #fff; stroke: var(--green); stroke-width: 2.5px; transition: fill 0.18s; }
+.overlay-room-pin { fill: #fff; stroke: var(--green); transition: fill 0.18s; }
 .overlay-room.is-selected .overlay-room-pin { fill: var(--green); }
 .overlay-room-label {
   font-family: 'Manrope', system-ui, sans-serif; font-weight: 600; fill: var(--ink);
-  paint-order: stroke; stroke: #fff; stroke-width: 4px; stroke-linejoin: round; pointer-events: none;
+  paint-order: stroke; stroke: #fff; stroke-linejoin: round; pointer-events: none;
 }
 .overlay-room.is-selected .overlay-room-label { fill: var(--green-ink); font-weight: 700; }
+.app[data-view="scene"] .toggle[data-action="toggle-marks"] { display: none; }
 .app[data-marks="off"] .overlay-wall, .app[data-marks="off"] .overlay-opening, .app[data-marks="off"] .overlay-entrance { display: none; }
 
 /* future 3D scene */
@@ -209,19 +213,18 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible, summary:focus-v
 .room-list { display: flex; flex-direction: column; gap: 2px; }
 .room-row {
   display: flex; justify-content: space-between; align-items: center; gap: 10px;
-  width: 100%; text-align: left; padding: 9px 10px; border-radius: 6px; font-size: 14px;
+  width: 100%; text-align: left; padding: 7px 10px; border-radius: 6px; font-size: 13.5px;
   transition: background 0.15s;
 }
 .room-row:hover { background: #f1f3ec; }
 .room-row[aria-current="true"] { background: var(--tint); color: var(--green-ink); font-weight: 600; }
-.room-row.is-all { margin-bottom: 6px; }
-.room-row.is-all::after { content: ''; }
+.room-row.is-all { margin-bottom: 4px; }
 .room-name { display: inline-flex; align-items: center; min-width: 0; }
 .room-count { font-size: 12px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .room-question { display: inline-grid; place-items: center; margin-left: 6px; color: var(--amber); }
 .room-question .icon { width: 15px; height: 15px; }
 
-.room-panel { padding-top: 4px; border-top: 1px solid var(--line); padding-top: 20px; }
+.room-panel { border-top: 1px solid var(--line); padding-top: 18px; scroll-margin-top: 8px; }
 .panel-head h2 { font-size: 21px; font-weight: 700; letter-spacing: -0.35px; margin: 0; line-height: 1.25; }
 .panel-sub { margin: 3px 0 0; color: var(--muted); font-size: 13px; }
 .panel-origin { margin: 8px 0 0; font-size: 13px; color: var(--text); }
@@ -339,9 +342,17 @@ dialog::backdrop { background: #26352799; backdrop-filter: blur(7px); }
   .lightbox-next { right: 6px; }
 }
 @media (max-width: 520px) {
-  .brand { font-size: 20px; }
+  .brand { font-size: 20px; order: 0; }
+  .topbar-actions { order: 1; margin-left: auto; }
+  .topbar-title { order: 2; flex: 0 0 100%; }
   .topbar h1 { font-size: 19px; }
   .chip { display: none; }
+  .overlay-room-label { display: none; }
+  .overlay-room.is-selected .overlay-room-label { display: block; font-size: 34px; }
+  .overlay-room-pin { r: 12px; }
+  .overlay-room-halo { r: 34px; }
+  .overlay-entrance text { display: none; }
+  .overlay-entrance circle { r: 9px; }
   .walk { margin-left: 0; width: 100%; }
   .stage-fullscreen { display: none; }
   .stage-canvas { height: min(58dvh, 440px); }

@@ -425,12 +425,36 @@ describe("runPhotoMatcher", () => {
         { assetId: "p2", imageUrl: "https://example.test/p2.jpg" },
       ],
       grok,
+      timeoutMs: 45_000,
     });
     const blob = JSON.stringify(captured);
     expect(blob).toContain("https://example.test/overlay-rev-003.png");
     expect(blob).toContain("https://example.test/p1.jpg");
     expect(blob).toContain("https://example.test/p2.jpg");
     expect(captured).toHaveLength(1);
+  });
+
+  it("forwards a bounded timeout to the existing Grok client", async () => {
+    let timeoutMs: number | undefined;
+    const grok: PhotoMatcherClient = {
+      mode: "fixture",
+      chatCompletions: async (request) => {
+        timeoutMs = request.timeoutMs;
+        return {
+          synthetic: true,
+          body: {
+            choices: [{ message: { role: "assistant", content: JSON.stringify(VALID_PHOTOS) }, finish_reason: "stop" }],
+          },
+        };
+      },
+    };
+    await runPhotoMatcher({
+      model: twoRoomModel(),
+      overlay: { imageUrl: "https://example.test/overlay.png" },
+      grok,
+      timeoutMs: 12_000,
+    });
+    expect(timeoutMs).toBe(12_000);
   });
 
   it("uses the packaged synthetic fixture through createGrokClient", async () => {

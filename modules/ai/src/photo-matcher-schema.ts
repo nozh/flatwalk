@@ -1,7 +1,9 @@
 export const PHOTO_MATCHER_MODULE = "photo-matcher/grok@0.1";
 export const PHOTO_MATCHER_PROMPT_VERSION = "photo-matcher/grok@0.1";
 export const PHOTO_MATCHER_FIXTURE_ID = "grok/photo-matcher.synthetic";
+export const PHOTO_MATCHER_54541_FIXTURE_ID = "grok/photo-matcher.54541";
 export const PHOTO_MATCHER_LOW_CONFIDENCE = 0.6;
+export const PHOTO_MATCHER_LIVE_TIMEOUT_MS = 180_000;
 
 export const FLOORS = ["parquet", "tile", "laminate", "unknown"] as const;
 export const WALL_TONES = ["light", "dark", "colored"] as const;

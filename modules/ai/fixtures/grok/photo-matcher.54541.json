@@ -1,0 +1,19 @@
+{
+  "synthetic": true,
+  "note": "Explicit synthetic x.ai chat.completions body whose photo/room/wall IDs match the accepted manual 54541 model. Not a live vision result and not automatic recognition of the apartment.",
+  "body": {
+    "id": "chatcmpl-synthetic-54541",
+    "object": "chat.completion",
+    "model": "grok-4.6",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"photos\":[{\"assetId\":\"p1\",\"roomId\":\"r2\",\"wallId\":\"w14\",\"confidence\":0.83,\"floor\":\"parquet\",\"wallTone\":\"light\"},{\"assetId\":\"p2\",\"roomId\":\"r1\",\"wallId\":\"w31\",\"confidence\":0.8,\"floor\":\"parquet\",\"wallTone\":\"light\"},{\"assetId\":\"p3\",\"roomId\":\"r10\",\"wallId\":\"w9\",\"confidence\":0.75,\"floor\":\"parquet\",\"wallTone\":\"light\"},{\"assetId\":\"p4\",\"roomId\":\"r99\",\"wallId\":\"w14\",\"confidence\":0.9,\"floor\":\"parquet\",\"wallTone\":\"light\"},{\"assetId\":\"p5\",\"roomId\":\"r2\",\"wallId\":\"w7\",\"confidence\":0.88,\"floor\":\"parquet\",\"wallTone\":\"light\"},{\"assetId\":\"p6\",\"roomId\":\"r3\",\"wallId\":\"w2\",\"confidence\":0.75,\"floor\":\"tile\",\"wallTone\":\"light\"},{\"assetId\":\"p7\",\"roomId\":\"r3\",\"wallId\":\"w2\",\"confidence\":0.74,\"floor\":\"tile\",\"wallTone\":\"light\"},{\"assetId\":\"p8\",\"roomId\":\"r4\",\"wallId\":\"w1\",\"confidence\":0.45,\"floor\":\"parquet\",\"wallTone\":\"light\"},{\"assetId\":\"p11\",\"roomId\":\"r8\",\"wallId\":\"w30\",\"confidence\":0.55,\"floor\":\"tile\",\"wallTone\":\"light\"},{\"assetId\":\"p12\",\"roomId\":\"r9\",\"wallId\":\"w6\",\"confidence\":0.41,\"floor\":\"parquet\",\"wallTone\":\"light\"},{\"assetId\":\"p17\",\"roomId\":null,\"wallId\":null,\"confidence\":0.3,\"floor\":\"unknown\",\"wallTone\":\"colored\"},{\"assetId\":\"ghost\",\"roomId\":\"r1\",\"wallId\":\"w7\",\"confidence\":0.9,\"floor\":\"parquet\",\"wallTone\":\"light\"}]}"
+        },
+        "finish_reason": "stop"
+      }
+    ]
+  }
+}

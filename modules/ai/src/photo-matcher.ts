@@ -4,6 +4,7 @@ import { createGrokClient, type GrokChatRequest, type GrokChatResult } from "./g
 import { photoMatcherPrompt } from "./photo-matcher-prompt.js";
 import {
   PHOTO_MATCHER_FIXTURE_ID,
+  PHOTO_MATCHER_LIVE_TIMEOUT_MS,
   PHOTO_MATCHER_LOW_CONFIDENCE,
   PHOTO_MATCHER_MODULE,
   PHOTO_MATCHER_PROMPT_VERSION,
@@ -12,7 +13,9 @@ import {
 } from "./photo-matcher-schema.js";
 
 export {
+  PHOTO_MATCHER_54541_FIXTURE_ID,
   PHOTO_MATCHER_FIXTURE_ID,
+  PHOTO_MATCHER_LIVE_TIMEOUT_MS,
   PHOTO_MATCHER_LOW_CONFIDENCE,
   PHOTO_MATCHER_MODULE,
   PHOTO_MATCHER_PROMPT_VERSION,
@@ -77,6 +80,7 @@ export type PhotoMatcherInput = {
   photos?: PhotoImageInput[];
   grok?: PhotoMatcherClient;
   fixtureId?: string;
+  timeoutMs?: number;
 };
 
 function imageUrl(source?: { imageUrl?: string; imageBase64?: string }): string | undefined {
@@ -244,6 +248,7 @@ export async function runPhotoMatcher(input: PhotoMatcherInput): Promise<PhotoMa
   const chat = await grok.chatCompletions({
     fixtureId,
     messages: visionMessages(input),
+    timeoutMs: input.timeoutMs ?? PHOTO_MATCHER_LIVE_TIMEOUT_MS,
   });
   const content = chat.body.choices[0]?.message.content;
   const common = {

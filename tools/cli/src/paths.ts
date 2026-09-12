@@ -28,6 +28,7 @@ export function runPaths(runDir: string) {
     dressing: path.join(root, "dressing"),
     build: path.join(root, "build"),
     latest: path.join(root, "model", "latest.json"),
+    history: path.join(root, "model", "history.json"),
     listing: path.join(root, "materials", "listing.json"),
     glb: path.join(root, "build", "flat.glb"),
     snapshot: path.join(root, "build", "scene.snapshot.json"),

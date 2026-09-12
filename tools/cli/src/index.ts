@@ -1,10 +1,13 @@
 #!/usr/bin/env npx tsx
-import { resolveAdapterMode } from "./adapters.ts";
+import { printLiveReadiness, resolveAdapterMode } from "./adapters.ts";
 import { parseArgs, USAGE } from "./args.ts";
 import { runBuild } from "./build.ts";
 import { CliError, EXIT } from "./errors.ts";
 import { runImport } from "./import.ts";
 import { runNotImplemented } from "./not-implemented.ts";
+import { runParse } from "./parse.ts";
+import { runPipeline } from "./run.ts";
+import { runServe } from "./serve.ts";
 import { runValidate } from "./validate.ts";
 
 async function main(): Promise<void> {
@@ -32,23 +35,29 @@ async function main(): Promise<void> {
 
   const adapters = resolveAdapterMode({ flag: args.adapters, env: process.env });
   console.log(`adapters: ${adapters}`);
+  if (args.command === "run" || args.command === "parse" || args.command === "import") {
+    printLiveReadiness(adapters, process.env);
+  }
 
   switch (args.command) {
+    case "run":
+      await runPipeline(args, adapters);
+      break;
     case "import":
       await runImport(args, adapters);
       break;
     case "parse":
-      await runNotImplemented(
-        "parse",
-        args.runDir,
-        "Plan Parser / grok-rects не подключены к CLI. Для демо используйте import --seed",
-      );
+      await runParse(args.runDir, adapters);
       break;
     case "validate":
       await runValidate(args.runDir);
       break;
     case "match":
-      await runNotImplemented("match", args.runDir, "Photo Matcher не подключён; нет сохранённого ответа как патча");
+      await runNotImplemented(
+        "match",
+        args.runDir,
+        "Photo Matcher не подключён к listing 54541; нет сохранённого ответа как патча",
+      );
       break;
     case "dress":
       await runNotImplemented("dress", args.runDir, "Dresser не подключён; L1/L2 не генерируются");
@@ -57,11 +66,7 @@ async function main(): Promise<void> {
       await runBuild(args.runDir);
       break;
     case "serve":
-      await runNotImplemented(
-        "serve",
-        args.runDir,
-        "Viewer static на папке запуска ещё не вызван из CLI; файлы Viewer не менялись",
-      );
+      await runServe(args.runDir, { start: !args.printCmd });
       break;
   }
 }

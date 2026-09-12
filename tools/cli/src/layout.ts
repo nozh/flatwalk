@@ -46,7 +46,7 @@ export async function requireRunDir(runDir: string): Promise<ReturnType<typeof r
   if (!(await exists(paths.root))) {
     throw new CliError(
       EXIT.runFolder,
-      `Run directory not found: ${paths.root}. Create it with: flatwalk import ${runDir} --from fixtures/54541 --seed`,
+        `Run directory not found: ${paths.root}. Create it with: flatwalk import ${runDir} --from fixtures/54541`,
     );
   }
   for (const name of RUN_SUBDIRS) {

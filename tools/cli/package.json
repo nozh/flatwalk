@@ -13,10 +13,13 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@flatwalk/ai": "file:../../modules/ai",
     "@flatwalk/builder": "file:../../modules/builder",
     "@flatwalk/contract": "file:../../modules/contract",
     "@flatwalk/firecrawl": "file:../../modules/firecrawl",
-    "@flatwalk/geometry": "file:../../modules/geometry"
+    "@flatwalk/geometry": "file:../../modules/geometry",
+    "@flatwalk/resolver": "file:../../modules/resolver",
+    "@flatwalk/validator": "file:../../modules/validator"
   },
   "devDependencies": {
     "@types/node": "24.3.1",

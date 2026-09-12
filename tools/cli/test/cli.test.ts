@@ -15,11 +15,17 @@ function sha256(bytes: Buffer): string {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
-function runCli(args: string[], cwd = cliRoot): Promise<{ code: number; stdout: string; stderr: string }> {
+const helpers = path.join(cliRoot, "test/helpers");
+
+function runCli(
+  args: string[],
+  cwd = cliRoot,
+  extraEnv: NodeJS.Dict<string> = {},
+): Promise<{ code: number; stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, ["--import", "tsx", cliEntry, ...args], {
       cwd,
-      env: { ...process.env, FLATWALK_ADAPTERS: "", NODE_NO_WARNINGS: "1" },
+      env: { ...process.env, FLATWALK_ADAPTERS: "", NODE_NO_WARNINGS: "1", ...extraEnv },
     });
     let stdout = "";
     let stderr = "";
@@ -68,23 +74,24 @@ describe("CLI 54541 fixture path", () => {
       expect(again.code).toBe(2);
       expect(again.stderr).toMatch(/already exists/);
 
-      const parsed = await runCli(["parse", runDir]);
-      expect(parsed.code).toBe(0);
-      expect(parsed.stdout).toMatch(/parse: не реализовано/);
-
       const validated = await runCli(["validate", runDir]);
       expect(validated.code).toBe(0);
-      if (validated.stdout.includes("не реализовано")) {
-        expect(validated.stdout).toMatch(/ValidationReport не создан/);
-      } else {
-        expect(validated.stdout).toMatch(/validation\/rev-000\.json/);
-        const report = JSON.parse(await readFile(path.join(runDir, "validation/rev-000.json"), "utf8")) as {
-          schemaVersion: string;
-          modelId: string;
-        };
-        expect(report.schemaVersion).toBe("0.1");
-        expect(report.modelId).toBe("cityexpert-54541");
-      }
+      expect(validated.stdout).toMatch(/validation\/rev-000\.json/);
+      expect(validated.stdout).toMatch(/Связность комнат проверена\. Ширина проходов не проверена/);
+      expect(validated.stdout).toMatch(/не полная готовность прогулки/);
+      expect(validated.stdout).toMatch(/proposeRepair/);
+      const report = JSON.parse(await readFile(path.join(runDir, "validation/rev-000.json"), "utf8")) as {
+        schemaVersion: string;
+        modelId: string;
+        revision: number;
+        walkReady: boolean;
+        checks: Array<{ checkId: string; status: string }>;
+      };
+      expect(report.schemaVersion).toBe("0.1");
+      expect(report.modelId).toBe("cityexpert-54541");
+      expect(report.revision).toBe(0);
+      expect(report.walkReady).toBe(true);
+      expect(report.checks.find((check) => check.checkId === "navigation.clearance")?.status).toBe("skipped");
 
       const matched = await runCli(["match", runDir]);
       expect(matched.code).toBe(0);
@@ -105,9 +112,10 @@ describe("CLI 54541 fixture path", () => {
       const glb = await readFile(path.join(runDir, "build/flat.glb"));
       expect(glb.subarray(0, 4).toString()).toBe("glTF");
 
-      const served = await runCli(["serve", runDir]);
+      const served = await runCli(["serve", runDir, "--print-cmd"]);
       expect(served.code).toBe(0);
-      expect(served.stdout).toMatch(/serve: не реализовано/);
+      expect(served.stdout).toMatch(/open http:\/\/127\.0\.0\.1:5173\//);
+      expect(served.stdout).toMatch(/FLATWALK_RUN=/);
 
       const missing = await runCli(["build", path.join(os.tmpdir(), `flatwalk-cli-absent-${Date.now()}`)]);
       expect(missing.code).toBe(2);

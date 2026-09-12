@@ -427,3 +427,6 @@ dialog::backdrop { background: #26352799; backdrop-filter: blur(7px); }
   .hud-button { font-size: 0; gap: 0; padding-left: 6px; }
   .hud-button .icon { width: 16px; height: 16px; }
 }
+
+/* Public static demo entry. */
+.demo-entry{min-height:100dvh;display:grid;place-items:center;padding:28px;background:radial-gradient(ellipse at top right,#d9ece4,transparent 65%),#f6f4ef;color:#183a32}.demo-card{width:min(100%,680px)}.demo-badge{letter-spacing:.16em;font-size:12px;font-weight:700}.demo-card h1{font-size:clamp(36px,7vw,66px);line-height:1.07;margin:28px 0}.demo-card p{font-size:18px;line-height:1.6}.demo-card form{display:grid;gap:12px;margin-top:28px}.demo-card input{width:100%;box-sizing:border-box;padding:16px;border:1px solid #9bb4a9;border-radius:12px;background:white;font-size:15px}.demo-card button{padding:15px 20px;border:0;border-radius:12px;background:#1b5949;color:white;font:inherit;cursor:pointer}.demo-card button:disabled{opacity:.6;cursor:wait}.demo-card .demo-note{font-size:14px;color:#496359}.demo-card .demo-skip{background:transparent;color:#1b5949;text-decoration:underline;padding-left:0}.demo-steps{line-height:1.8;padding-left:24px}.demo-disclosure{padding:8px 16px;background:#fff1c7;color:#57451a;font:12px/1.5 system-ui;text-align:center}

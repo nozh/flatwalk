@@ -81,6 +81,7 @@ function staticData(): Plugin {
       emitTree(this, fixtureDir, 'fixtures/54541');
       emitTree(this, join(runDir, 'model'), 'model');
       emitTree(this, join(runDir, 'materials'), 'materials');
+      emitTree(this, join(runDir, 'validation'), 'validation');
     },
   };
 }

@@ -1,4 +1,5 @@
 import './style.css';
+import { mountDemoEntry } from './demo-entry';
 import { dataSourceFromSearch } from './source';
 import { loadFlatModel } from './load-model';
 import { loadValidationReport } from './load-report';
@@ -92,4 +93,13 @@ async function boot(): Promise<void> {
 // Read-only diagnostics for browser smoke checks (prototype pattern); no state-mutating backdoor.
 Object.defineProperty(window, '__flatwalk', { value: { inspect: () => controller?.inspect() ?? null }, writable: false });
 
-void boot();
+async function openPublicDemo(): Promise<void> {
+  await boot();
+  root.querySelector<HTMLButtonElement>('[data-view="scene"]')?.click();
+}
+
+if (import.meta.env.VITE_PUBLIC_DEMO === 'true' && !new URLSearchParams(window.location.search).has('src')) {
+  mountDemoEntry(root, openPublicDemo);
+} else {
+  void boot();
+}

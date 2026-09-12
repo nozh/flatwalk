@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: flatwalk-demo
+    runtime: static
+    buildCommand: npm ci && npm run build:demo
+    staticPublishPath: modules/viewer/dist
+    envVars:
+      - key: NODE_VERSION
+        value: 22.16.0

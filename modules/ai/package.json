@@ -1,0 +1,27 @@
+{
+  "name": "@flatwalk/ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./grok-rects": "./src/grok-rects.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@flatwalk/contract": "*"
+  },
+  "devDependencies": {
+    "@flatwalk/builder": "*",
+    "@flatwalk/geometry": "*",
+    "@flatwalk/resolver": "*",
+    "@types/node": "^24.3.1",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}

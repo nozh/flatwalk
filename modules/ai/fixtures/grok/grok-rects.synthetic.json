@@ -1,0 +1,19 @@
+{
+  "synthetic": true,
+  "note": "Synthetic three-room grok-rects body for fixture mode. Not a live x.ai result.",
+  "body": {
+    "id": "chatcmpl-synthetic-grok-rects",
+    "object": "chat.completion",
+    "model": "grok-4.6",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"rooms\":[{\"id\":\"r1\",\"type\":\"living\",\"rect\":[0,0,12,6]},{\"id\":\"r2\",\"type\":\"hall\",\"rect\":[0,6,6,6]},{\"id\":\"r3\",\"type\":\"bedroom\",\"rect\":[6,6,6,6]}],\"doors\":[{\"between\":[\"r1\",\"r2\"]},{\"between\":[\"r2\",\"r3\"]}],\"entrance\":\"r2\"}"
+        },
+        "finish_reason": "stop"
+      }
+    ]
+  }
+}

@@ -8,6 +8,13 @@ export function printPipelineOutcome(model: FlatModel, report: ValidationReport,
   const clearance = report.checks.find((check) => check.checkId === "navigation.clearance");
   const failed = report.checks.filter((check) => check.status === "fail");
 
+  if (report.modelId !== model.id || report.revision !== model.revision) {
+    console.log(
+      `result: REFUSED — report ${report.modelId} rev ${report.revision} does not match model ${model.id} rev ${model.revision}`,
+    );
+    return;
+  }
+
   console.log("\n── result ──");
   console.log(`result: model ${model.id} rev ${model.revision}`);
   console.log(`result: walkReady=${report.walkReady} navigation.clearance=${clearance?.status ?? "absent"}`);

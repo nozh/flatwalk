@@ -1,4 +1,5 @@
 import { writeFile } from "node:fs/promises";
+import path from "node:path";
 import { build, snapshot, toGLB, BuilderError } from "@flatwalk/builder";
 import { CliError, EXIT } from "./errors.ts";
 import { requireRunDir } from "./layout.ts";
@@ -15,6 +16,11 @@ export async function runBuild(runDir: string): Promise<void> {
     await writeFile(paths.glb, Buffer.from(glb));
     console.log(`build: Builder snapshot → ${paths.snapshot} (${snap.length} meshes)`);
     console.log(`build: Builder GLB → ${paths.glb} (${glb.byteLength} bytes)`);
+    console.log(`build: scene ${model.id} rev ${model.revision}`);
+    await writeFile(
+      path.join(paths.build, "revision.json"),
+      `${JSON.stringify({ modelId: model.id, revision: model.revision, meshes: snap.length }, null, 2)}\n`,
+    );
   } catch (error) {
     if (error instanceof BuilderError) {
       throw new CliError(EXIT.model, `Builder refused the model (${error.code}): ${error.message}`, error.issues);

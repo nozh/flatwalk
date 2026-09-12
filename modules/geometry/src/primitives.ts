@@ -1,4 +1,7 @@
-export type Point = [number, number];
+import type { FlatModel } from '@flatwalk/contract';
+
+/** Plan coordinates from Contract: metres, x right, y down. */
+export type Point = FlatModel['vertices'][string];
 
 export const TOL = 0.01;
 

@@ -1,4 +1,4 @@
-import type { FlatModel, Meta } from '@flatwalk/contract';
+import { SCHEMA_VERSION, validateFlatModel, type FlatModel, type Meta } from '@flatwalk/contract';
 
 export const META: Meta = { provenance: 'geometry-test@0.1', basis: 'inferred' };
 
@@ -10,8 +10,8 @@ const defaultMeta = {
 };
 
 export function baseModel(over: Partial<FlatModel> & Pick<FlatModel, 'vertices' | 'walls' | 'rooms'>): FlatModel {
-  return {
-    schemaVersion: '0.1',
+  const parsed = validateFlatModel({
+    schemaVersion: SCHEMA_VERSION,
     id: 'geo-synth',
     revision: 1,
     source: { site: 'manual', fetchedAt: '2026-09-12T10:00:00Z' },
@@ -29,7 +29,11 @@ export function baseModel(over: Partial<FlatModel> & Pick<FlatModel, 'vertices' 
     openings: {},
     assets: {},
     ...over,
-  };
+  });
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join('; '));
+  }
+  return parsed.data;
 }
 
 export function wall(a: string, b: string, thickness = 0.2, exterior = false) {

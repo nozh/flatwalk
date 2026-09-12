@@ -6,11 +6,6 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   root,
-  resolve: {
-    alias: {
-      '@flatwalk/contract': path.resolve(root, '../contract/src/index.ts'),
-    },
-  },
   test: {
     dir: root,
     include: ['test/**/*.test.ts'],

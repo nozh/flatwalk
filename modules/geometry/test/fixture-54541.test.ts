@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { FlatModel } from '@flatwalk/contract';
+import { validateFlatModel, type FlatModel } from '@flatwalk/contract';
+import flatModelSchema from '@flatwalk/contract/schemas/FlatModel.schema.json' with { type: 'json' };
 import { describe, expect, it } from 'vitest';
 import { adjacency, areas, collisions, faces, path, roomPolygon, startPoint, wallSide } from '../src/index.ts';
 import { segmentDistance } from '../src/primitives.ts';
@@ -9,7 +10,11 @@ import { segmentDistance } from '../src/primitives.ts';
 const fixturePath = join(dirname(fileURLToPath(import.meta.url)), '../../../fixtures/54541/flat.model.json');
 
 function loadFixture(): FlatModel {
-  return JSON.parse(readFileSync(fixturePath, 'utf8')) as FlatModel;
+  const parsed = validateFlatModel(JSON.parse(readFileSync(fixturePath, 'utf8')));
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join('; '));
+  }
+  return parsed.data;
 }
 
 /** Areas from fixtures/54541/README.md, axis rectangles, Σ = 105. */
@@ -63,6 +68,14 @@ function openingCenter(model: FlatModel, openingId: string): [number, number] {
 }
 
 describe('GEO-07 fixture 54541', () => {
+  it('loads the committed etalon through public FlatModelSchema and JSON Schema 0.1', () => {
+    expect(flatModelSchema.$schema).toContain('2020-12');
+    expect((flatModelSchema as { properties?: { schemaVersion?: { const?: string } } }).properties?.schemaVersion?.const).toBe('0.1');
+    const model = loadFixture();
+    expect(model.schemaVersion).toBe('0.1');
+    expect(model.id).toBe('cityexpert-54541');
+  });
+
   it('maps one bounded face per room with README contours and areas', () => {
     const model = loadFixture();
     const roomIds = Object.keys(model.rooms);

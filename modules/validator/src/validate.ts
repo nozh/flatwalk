@@ -150,6 +150,49 @@ function sortChecks(checks: ReportCheck[]): ReportCheck[] {
   });
 }
 
+const PHOTO_CONFIDENCE_REVIEW = 0.6;
+
+type ReviewItem = ValidationReport["review"]["items"][number];
+
+function photoQuestion(meta: Meta): string | null {
+  if (typeof meta.question !== "string") return null;
+  const question = meta.question.trim();
+  return question.length > 0 ? question : null;
+}
+
+function photoReviewReason(id: string, question: string | null, confidence: number | undefined): string {
+  const low = typeof confidence === "number" && confidence < PHOTO_CONFIDENCE_REVIEW;
+  if (low && question) {
+    return `Photo ${id} match confidence is ${confidence} (below ${PHOTO_CONFIDENCE_REVIEW}). Question: ${question}`;
+  }
+  if (low) {
+    return `Photo ${id} match confidence is ${confidence} (below ${PHOTO_CONFIDENCE_REVIEW}).`;
+  }
+  return `Photo ${id} needs review: ${question}`;
+}
+
+function photoReviewItems(model: FlatModel): ReviewItem[] {
+  const items: ReviewItem[] = [];
+  for (const id of Object.keys(model.assets).sort((a, b) => a.localeCompare(b))) {
+    const asset = model.assets[id];
+    if (!asset || asset.kind !== "photo") continue;
+    const meta = asset.meta;
+    if (meta.reviewed === true) continue;
+    const question = photoQuestion(meta);
+    const confidence = typeof meta.confidence === "number" ? meta.confidence : undefined;
+    const low = confidence !== undefined && confidence < PHOTO_CONFIDENCE_REVIEW;
+    if (!question && !low) continue;
+    items.push({
+      id: `photo_${id}`,
+      path: `assets.${id}`,
+      severity: "warning",
+      reason: photoReviewReason(id, question, confidence),
+      suggestion: "Confirm this photo placement as-is if it is correct.",
+    });
+  }
+  return items;
+}
+
 function unverifiedLayers(): ReportCheck[] {
   return [
     check(
@@ -617,7 +660,7 @@ export function validate(input: unknown, avatar: AvatarProfile = DEFAULT_AVATAR)
       walkReady: walkReadyOf(sorted),
       confirmation: confirmationOf(model),
       checks: sorted,
-      review: { items: consistency.review },
+      review: { items: [...consistency.review, ...photoReviewItems(model)] },
     });
   } catch (error) {
     return fallbackReport(input, error);

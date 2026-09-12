@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ValidationReportSchema, type ValidationReport } from "@flatwalk/contract";
 import { describe, expect, it } from "vitest";
-import { door, parseModel, walkableTwoRooms } from "./fixtures.js";
+import { door, parseModel, photo, walkableTwoRooms } from "./fixtures.js";
 import { DEFAULT_AVATAR, validate } from "./index.js";
 
 const fixturePath = join(dirname(fileURLToPath(import.meta.url)), "../../../fixtures/54541/flat.model.json");
@@ -225,5 +225,172 @@ describe("diagnostic failures", () => {
     const report = validate(walkableTwoRooms());
     expect(report.confirmation).toBe(0);
     expect(report.walkReady).toBe(true);
+  });
+});
+
+describe("photo match review items", () => {
+  it("projects a non-empty assets meta.question into review", () => {
+    const model = walkableTwoRooms({
+      assets: {
+        p8: photo("p8", {
+          meta: { provenance: "photo-matcher/grok@0.1", basis: "inferred", confidence: 0.77, question: "bedroom r4 or office r10?" },
+        }),
+      },
+    });
+    const before = structuredClone(model);
+    const report = validate(model);
+    const item = report.review.items.find(entry => entry.path === "assets.p8");
+    expect(item).toMatchObject({ path: "assets.p8", severity: "warning" });
+    expect(item?.id).toMatch(/^photo_p8$/);
+    expect(item?.reason).toMatch(/Photo p8/i);
+    expect(item?.reason).toContain("bedroom r4 or office r10?");
+    expect(item?.reason).not.toMatch(/0\.77/);
+    expect(item?.suggestion).toMatch(/Confirm/i);
+    expect(report.walkReady).toBe(true);
+    expect(byId(report, "navigation.clearance")?.status).toBe("skipped");
+    expect(model).toEqual(before);
+    expect(validate(model)).toEqual(report);
+  });
+
+  it("projects Matcher confidence 0.59 into review even without a question", () => {
+    const model = walkableTwoRooms({
+      assets: {
+        p8: photo("p8", {
+          meta: { provenance: "photo-matcher/grok@0.1", basis: "inferred", confidence: 0.59 },
+        }),
+      },
+    });
+    const report = validate(model);
+    const item = report.review.items.find(entry => entry.path === "assets.p8");
+    expect(item?.reason).toMatch(/0\.59/);
+    expect(item?.reason).toMatch(/0\.6/);
+    expect(item?.reason).toMatch(/Photo p8/i);
+    expect(report.walkReady).toBe(true);
+  });
+
+  it("does not invent a low-confidence review at confidence 0.6 without a question", () => {
+    const model = walkableTwoRooms({
+      assets: {
+        p6: photo("p6", {
+          meta: { provenance: "photo-matcher/grok@0.1", basis: "inferred", confidence: 0.6 },
+        }),
+      },
+    });
+    expect(validate(model).review.items.map(item => item.path)).not.toContain("assets.p6");
+  });
+
+  it("does not invent confidence when the photo only has a question", () => {
+    const model = walkableTwoRooms({
+      assets: {
+        p17: photo("p17", {
+          room: null,
+          meta: { provenance: "photo-matcher/grok@0.1", basis: "inferred", question: "not an interior photo" },
+        }),
+      },
+    });
+    const item = validate(model).review.items.find(entry => entry.path === "assets.p17");
+    expect(item?.reason).toContain("not an interior photo");
+    expect(item?.reason).not.toMatch(/confidence/i);
+  });
+
+  it("does not invent a review when confidence is missing and there is no question", () => {
+    const model = walkableTwoRooms({
+      assets: {
+        p1: photo("p1", {
+          meta: { provenance: "photo-matcher/grok@0.1", basis: "inferred" },
+        }),
+      },
+    });
+    expect(validate(model).review.items.map(item => item.path)).not.toContain("assets.p1");
+  });
+
+  it("emits one review item when both question and low confidence apply", () => {
+    const model = walkableTwoRooms({
+      assets: {
+        p8: photo("p8", {
+          meta: {
+            provenance: "photo-matcher/grok@0.1",
+            basis: "inferred",
+            confidence: 0.45,
+            question: "two similar bedrooms",
+          },
+        }),
+      },
+    });
+    const items = validate(model).review.items.filter(item => item.path === "assets.p8");
+    expect(items).toHaveLength(1);
+    expect(items[0]?.reason).toMatch(/0\.45/);
+    expect(items[0]?.reason).toContain("two similar bedrooms");
+  });
+
+  it("hides a reviewed photo even when historical confidence is below 0.6", () => {
+    const model = walkableTwoRooms({
+      assets: {
+        p8: photo("p8", {
+          meta: {
+            provenance: "photo-matcher/grok@0.1",
+            basis: "inferred",
+            confidence: 0.41,
+            question: "similar bedrooms",
+            reviewed: true,
+          },
+        }),
+      },
+    });
+    expect(validate(model).review.items.map(item => item.path)).not.toContain("assets.p8");
+  });
+
+  it("still asks review for human provenance that is not reviewed", () => {
+    const model = walkableTwoRooms({
+      assets: {
+        p8: photo("p8", {
+          meta: { provenance: "human", basis: "declared", confidence: 0.4, question: "which bedroom?" },
+        }),
+      },
+    });
+    expect(validate(model).review.items.some(item => item.path === "assets.p8")).toBe(true);
+  });
+
+  it("lists several photos in stable id order without duplicating ids", () => {
+    const model = walkableTwoRooms({
+      assets: {
+        p12: photo("p12", { meta: { provenance: "photo-matcher/grok@0.1", basis: "inferred", confidence: 0.41 } }),
+        p8: photo("p8", { meta: { provenance: "photo-matcher/grok@0.1", basis: "inferred", question: "q8" } }),
+        p11: photo("p11", { meta: { provenance: "photo-matcher/grok@0.1", basis: "inferred", confidence: 0.55, question: "q11" } }),
+      },
+    });
+    const photos = validate(model).review.items.filter(item => item.path.startsWith("assets."));
+    expect(photos.map(item => item.path)).toEqual(["assets.p11", "assets.p12", "assets.p8"]);
+    expect(new Set(photos.map(item => item.id)).size).toBe(3);
+  });
+
+  it("keeps unmarked exterior-door review items alongside photo questions", () => {
+    const model = walkableTwoRooms({
+      openings: {
+        d1: door("w25", 1, 1),
+        enter: door("w61", 1, 1, { entrance: true }),
+        terrace: door("w34", 1, 1),
+      },
+      assets: {
+        p8: photo("p8", {
+          meta: { provenance: "photo-matcher/grok@0.1", basis: "inferred", question: "which bedroom?" },
+        }),
+      },
+    });
+    const report = validate(model);
+    expect(report.review.items.some(item => item.path === "openings.terrace")).toBe(true);
+    expect(report.review.items.some(item => item.path === "assets.p8")).toBe(true);
+    expect(report.walkReady).toBe(true);
+  });
+
+  it("does not project non-photo questions from the 54541 etalon into review", () => {
+    const report = validate(load54541());
+    const paths = report.review.items.map(item => item.path);
+    expect(paths).not.toContain("rooms.r2");
+    expect(paths).toContain("assets.p11");
+    expect(paths).not.toContain("openings.o11");
+    expect(report.walkReady).toBe(true);
+    expect(byId(report, "navigation.clearance")?.status).toBe("skipped");
+    expect(byId(report, "evidence.sources")?.status).toBe("unverified");
   });
 });

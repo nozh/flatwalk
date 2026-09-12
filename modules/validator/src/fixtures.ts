@@ -29,6 +29,19 @@ export function door(wallId: string, at: number, width: number, extra: Record<st
   return { wall: wallId, kind: "door" as const, at, width, meta: META, ...extra };
 }
 
+export function photo(id: string, extra: Record<string, unknown> = {}) {
+  return {
+    kind: "photo" as const,
+    url: `photos/${id}.jpg`,
+    width: 1920,
+    height: 1080,
+    room: "left" as string | null,
+    faces: null as string | null,
+    meta: { ...META },
+    ...extra,
+  };
+}
+
 /** Two 4×3 m rooms; left entrance on w61, interior door on w25. */
 export function walkableTwoRooms(over: Record<string, unknown> = {}): FlatModel {
   return parseModel({

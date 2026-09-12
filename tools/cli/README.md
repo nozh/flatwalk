@@ -1,6 +1,14 @@
 # FlatWalk CLI
 
-Локальный конвейер без Convex. Пакет запускается **напрямую** из `tools/cli`; корневой workspace пока не регистрирует его (это координатору).
+Локальный конвейер без Convex. Пакет зарегистрирован в корневом workspace; его тесты входят в корневой `npm test`. Прямой запуск из `tools/cli` тоже сохранён.
+
+## Запуск из корня репозитория кода
+
+```text
+npm run flatwalk -- import /tmp/flatwalk-54541 --from fixtures/54541 --seed
+npm run flatwalk -- build /tmp/flatwalk-54541
+npm test -w @flatwalk/cli
+```
 
 ## Установка
 

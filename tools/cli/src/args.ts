@@ -67,7 +67,7 @@ export const USAGE = `FlatWalk CLI — локальный конвейер бе�
   4  режим адаптеров (live без флага, отсутствие fixture не уходит в сеть)
   5  ошибка чтения/записи файлов
 
-Регистрация workspace в корневом package.json — координатору; этот пакет запускается напрямую.
+Из корня репозитория кода: npm run flatwalk -- <команда> <папка-запуска> [флаги].
 `;
 
 function isCommand(value: string): value is Command {

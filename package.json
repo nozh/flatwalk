@@ -1,0 +1,13 @@
+{
+  "name": "flatwalk",
+  "private": true,
+  "workspaces": [
+    "modules/*",
+    "tools/cli"
+  ],
+  "scripts": {
+    "fetch": "npm run fetch -w @flatwalk/firecrawl --",
+    "test": "npm test -w @flatwalk/firecrawl && npm test -w @flatwalk/ai && npm test -w @flatwalk/cli",
+    "flatwalk": "npm run flatwalk -w @flatwalk/cli --"
+  }
+}

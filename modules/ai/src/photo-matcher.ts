@@ -1,19 +1,22 @@
 import { PatchSchema, type FlatModel, type Op, type Patch } from "@flatwalk/contract";
 import { GeometryError, wallSide } from "@flatwalk/geometry";
-import { createGrokClient, type GrokChatRequest, type GrokChatResult } from "./grok.js";
+import { createGrokClient, DEFAULT_GROK_MODEL, type GrokChatRequest, type GrokChatResult } from "./grok.js";
 import { photoMatcherPrompt } from "./photo-matcher-prompt.js";
 import {
+  PHOTO_MATCHER_CHAT_EXTRA,
   PHOTO_MATCHER_FIXTURE_ID,
   PHOTO_MATCHER_LIVE_TIMEOUT_MS,
   PHOTO_MATCHER_LOW_CONFIDENCE,
   PHOTO_MATCHER_MODULE,
   PHOTO_MATCHER_PROMPT_VERSION,
   parseGrokPhotoMatcherJson,
+  summarizeGrokUsage,
   type GrokPhotoMatch,
 } from "./photo-matcher-schema.js";
 
 export {
   PHOTO_MATCHER_54541_FIXTURE_ID,
+  PHOTO_MATCHER_CHAT_EXTRA,
   PHOTO_MATCHER_FIXTURE_ID,
   PHOTO_MATCHER_LIVE_TIMEOUT_MS,
   PHOTO_MATCHER_LOW_CONFIDENCE,
@@ -22,6 +25,7 @@ export {
   parseGrokPhotoMatcherJson,
   parseGrokPhotoMatcherResult,
   photoMatcherResultSchema,
+  summarizeGrokUsage,
   type GrokPhotoMatch,
   type GrokPhotoMatcherResult,
 } from "./photo-matcher-schema.js";
@@ -66,6 +70,12 @@ export type PhotoMatcherDiagnostics = {
   schemaErrors?: string[];
   dropped: PhotoMatcherDropped[];
   raw?: string;
+  finishReason?: string | null;
+  providerModel?: string;
+  usageStatus: "present" | "unknown";
+  usage: unknown;
+  cost: "unknown";
+  chatExtra: typeof PHOTO_MATCHER_CHAT_EXTRA;
 };
 
 export type PhotoMatcherOutput = {
@@ -231,6 +241,10 @@ function baseDiagnostics(partial: Partial<PhotoMatcherDiagnostics> = {}): PhotoM
     fixtureId: PHOTO_MATCHER_FIXTURE_ID,
     liveApiCalled: false,
     dropped: [],
+    usageStatus: "unknown",
+    usage: "unknown",
+    cost: "unknown",
+    chatExtra: PHOTO_MATCHER_CHAT_EXTRA,
     ...partial,
   };
 }
@@ -247,16 +261,25 @@ export async function runPhotoMatcher(input: PhotoMatcherInput): Promise<PhotoMa
   const fixtureId = input.fixtureId ?? PHOTO_MATCHER_FIXTURE_ID;
   const chat = await grok.chatCompletions({
     fixtureId,
+    model: DEFAULT_GROK_MODEL,
     messages: visionMessages(input),
     timeoutMs: input.timeoutMs ?? PHOTO_MATCHER_LIVE_TIMEOUT_MS,
+    extra: { ...PHOTO_MATCHER_CHAT_EXTRA },
   });
   const content = chat.body.choices[0]?.message.content;
+  const usage = summarizeGrokUsage(chat.body.usage);
   const common = {
     synthetic: chat.synthetic,
     liveApiCalled: grok.mode === "live" && chat.synthetic !== true,
     note: chat.note,
     fixtureId,
     raw: typeof content === "string" ? content : undefined,
+    finishReason: chat.body.choices[0]?.finish_reason ?? null,
+    providerModel: typeof chat.body.model === "string" ? chat.body.model : undefined,
+    usageStatus: usage.usageStatus,
+    usage: usage.usage,
+    cost: usage.cost,
+    chatExtra: PHOTO_MATCHER_CHAT_EXTRA,
   };
 
   if (typeof content !== "string" || !content.trim()) {

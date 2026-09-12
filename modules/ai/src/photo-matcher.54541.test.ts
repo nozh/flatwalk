@@ -7,11 +7,13 @@ import { PatchSchema, validateFlatModel, type FlatModel } from "@flatwalk/contra
 import { renderOverlay } from "@flatwalk/builder/node";
 import { apply } from "@flatwalk/resolver";
 import { validate } from "@flatwalk/validator";
-import { createGrokClient } from "./grok.js";
+import { createGrokClient, DEFAULT_GROK_MODEL, XAI_CHAT_COMPLETIONS_URL } from "./grok.js";
 import {
   PHOTO_MATCHER_54541_FIXTURE_ID,
+  PHOTO_MATCHER_CHAT_EXTRA,
   PHOTO_MATCHER_LOW_CONFIDENCE,
   PHOTO_MATCHER_MODULE,
+  parseGrokPhotoMatcherJson,
   runPhotoMatcher,
 } from "./photo-matcher.js";
 
@@ -153,5 +155,50 @@ describe("54541 photo-matcher integration (manual geometry)", () => {
 
     expect(await sha256File(modelPath)).toBe(before);
     expect((await stat(modelPath)).isFile()).toBe(true);
+  });
+
+  it("forwards Matcher chat extra on a live-mocked 54541 call and still parses the Matcher schema", async () => {
+    const model = await loadManual54541();
+    const overlay = await renderOverlay(model, await readFile(path.join(listingDir, "plan.png")));
+    const envelope = JSON.parse(
+      await readFile(path.join(repoRoot, "modules/ai/fixtures/grok/photo-matcher.54541.json"), "utf8"),
+    ) as { body: { choices: Array<{ message: { content: string } }> } };
+    const captured: Array<{ url: string; body: string }> = [];
+    const grok = createGrokClient({
+      mode: "live",
+      apiKey: "test-xai-key-not-a-secret",
+      transport: async (request) => {
+        captured.push({ url: request.url, body: request.body ?? "" });
+        return {
+          status: 200,
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            model: DEFAULT_GROK_MODEL,
+            choices: envelope.body.choices,
+            usage: { prompt_tokens: 99, completion_tokens: 40 },
+          }),
+        };
+      },
+    });
+
+    const result = await runPhotoMatcher({
+      model,
+      overlay: { imageBase64: Buffer.from(overlay.png).toString("base64") },
+      grok,
+      fixtureId: PHOTO_MATCHER_54541_FIXTURE_ID,
+    });
+
+    expect(captured).toHaveLength(1);
+    expect(captured[0]?.url).toBe(XAI_CHAT_COMPLETIONS_URL);
+    expect(JSON.parse(captured[0]?.body ?? "{}")).toMatchObject({
+      model: DEFAULT_GROK_MODEL,
+      ...PHOTO_MATCHER_CHAT_EXTRA,
+    });
+    const parsed = parseGrokPhotoMatcherJson(envelope.body.choices[0]!.message.content);
+    expect(parsed.ok).toBe(true);
+    expect(result.patch).not.toBeNull();
+    expect(result.diagnostics.synthetic).toBe(false);
+    expect(result.diagnostics.usageStatus).toBe("present");
+    expect(result.diagnostics.cost).toBe("unknown");
   });
 });

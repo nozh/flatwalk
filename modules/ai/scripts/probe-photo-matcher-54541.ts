@@ -19,9 +19,10 @@ import { renderOverlay } from "@flatwalk/builder/node";
 import { apply } from "@flatwalk/resolver";
 import { validate } from "@flatwalk/validator";
 import { AdapterError } from "../src/errors.ts";
-import { createGrokClient, DEFAULT_GROK_MODEL } from "../src/grok.ts";
+import { createGrokClient, DEFAULT_GROK_MODEL, DEFAULT_GROK_TIMEOUT_MS } from "../src/grok.ts";
 import {
   PHOTO_MATCHER_54541_FIXTURE_ID,
+  PHOTO_MATCHER_CHAT_EXTRA,
   PHOTO_MATCHER_LIVE_TIMEOUT_MS,
   PHOTO_MATCHER_LOW_CONFIDENCE,
   PHOTO_MATCHER_PROMPT_VERSION,
@@ -205,9 +206,15 @@ const report: Record<string, unknown> = {
   promptVersion: PHOTO_MATCHER_PROMPT_VERSION,
   defaultProviderModel: DEFAULT_GROK_MODEL,
   timeoutMs: PHOTO_MATCHER_LIVE_TIMEOUT_MS,
+  clientDefaultTimeoutMs: DEFAULT_GROK_TIMEOUT_MS,
+  chatExtra: PHOTO_MATCHER_CHAT_EXTRA,
+  note: "Matcher extra is call-specific; DEFAULT_GROK_TIMEOUT_MS and Parser GROK_RECTS_CHAT_EXTRA are unchanged by this probe.",
   fixtureId: live ? null : PHOTO_MATCHER_54541_FIXTURE_ID,
   photosAttached: photos.length,
   overlayAttached: true,
+  usageStatus: "unknown",
+  usage: "unknown",
+  cost: "unknown",
 };
 
 try {
@@ -230,6 +237,11 @@ try {
   report.patchModelId = result.patch?.modelId ?? null;
   report.patchBaseRevision = result.patch?.baseRevision ?? null;
   report.patchModule = result.patch?.module ?? null;
+  report.finishReason = result.diagnostics.finishReason ?? null;
+  report.providerModel = result.diagnostics.providerModel ?? null;
+  report.usageStatus = result.diagnostics.usageStatus;
+  report.usage = result.diagnostics.usage;
+  report.cost = result.diagnostics.cost;
   if (result.diagnostics.synthetic === true) {
     report.recognition = "synthetic fixture, not a live 54541 vision result";
   } else if (result.diagnostics.liveApiCalled) {
@@ -282,8 +294,25 @@ try {
 
   if (result.diagnostics.liveApiCalled && result.diagnostics.raw) {
     report.rawChars = result.diagnostics.raw.length;
-    report.fixtureWrite =
-      "Live usable envelope would be saved here after stripping usage/ids; this run did not persist secrets.";
+    const liveEnvelope = {
+      synthetic: false,
+      note: "Live x.ai chat.completions body for Photo Matcher 54541. Applied onto accepted manual geometry; not proof of automatic recognition. Usage/cost omitted or unknown; API keys never stored.",
+      body: {
+        model: result.diagnostics.providerModel ?? DEFAULT_GROK_MODEL,
+        choices: [
+          {
+            index: 0,
+            message: { role: "assistant", content: result.diagnostics.raw },
+            finish_reason: result.diagnostics.finishReason ?? null,
+          },
+        ],
+        usage: result.diagnostics.usageStatus === "present" ? result.diagnostics.usage : "unknown",
+      },
+    };
+    const liveFixturePath = path.join(repoRoot, "modules/ai/fixtures/grok/photo-matcher.54541.live.json");
+    await writeFile(liveFixturePath, `${JSON.stringify(liveEnvelope, null, 2)}\n`);
+    report.liveFixture = path.relative(repoRoot, liveFixturePath);
+    report.fixtureWrite = "Saved live Matcher envelope without API keys; cost remains unknown unless provider usage includes it.";
   }
 } catch (error) {
   const summary = summarize(error);

@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import { PatchSchema, validateFlatModel, type FlatModel } from "@flatwalk/contract";
 import { apply } from "@flatwalk/resolver";
 import { AdapterError } from "./errors.js";
-import { createGrokClient } from "./grok.js";
+import { createGrokClient, DEFAULT_GROK_MODEL, DEFAULT_GROK_TIMEOUT_MS, XAI_CHAT_COMPLETIONS_URL } from "./grok.js";
+import { GROK_RECTS_CHAT_EXTRA } from "./grok-rects.js";
 import {
+  PHOTO_MATCHER_CHAT_EXTRA,
   PHOTO_MATCHER_FIXTURE_ID,
+  PHOTO_MATCHER_LIVE_TIMEOUT_MS,
   PHOTO_MATCHER_LOW_CONFIDENCE,
   PHOTO_MATCHER_MODULE,
   PHOTO_MATCHER_PROMPT_VERSION,
@@ -12,6 +15,7 @@ import {
   photoMatcherPrompt,
   photoMatcherResultSchema,
   runPhotoMatcher,
+  summarizeGrokUsage,
   type PhotoMatcherClient,
 } from "./photo-matcher.js";
 
@@ -432,6 +436,78 @@ describe("runPhotoMatcher", () => {
     expect(blob).toContain("https://example.test/p1.jpg");
     expect(blob).toContain("https://example.test/p2.jpg");
     expect(captured).toHaveLength(1);
+  });
+
+  it("posts Matcher-specific bounded reasoning extra through createGrokClient", async () => {
+    const captured: Array<{ url: string; body: string }> = [];
+    const grok = createGrokClient({
+      mode: "live",
+      apiKey: "test-xai-key-not-a-secret",
+      transport: async (request) => {
+        captured.push({ url: request.url, body: request.body ?? "" });
+        return {
+          status: 200,
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            model: DEFAULT_GROK_MODEL,
+            choices: [
+              {
+                message: { role: "assistant", content: JSON.stringify(VALID_PHOTOS) },
+                finish_reason: "stop",
+              },
+            ],
+          }),
+        };
+      },
+    });
+    const result = await runPhotoMatcher({
+      model: twoRoomModel(),
+      overlay: { imageUrl: "https://example.test/overlay.png" },
+      grok,
+    });
+    expect(captured).toHaveLength(1);
+    expect(captured[0]?.url).toBe(XAI_CHAT_COMPLETIONS_URL);
+    const posted = JSON.parse(captured[0]?.body ?? "{}") as {
+      model: string;
+      reasoning_effort?: string;
+      max_completion_tokens?: number;
+      response_format?: { type: string };
+    };
+    expect(posted.model).toBe(DEFAULT_GROK_MODEL);
+    expect(posted.reasoning_effort).toBe(PHOTO_MATCHER_CHAT_EXTRA.reasoning_effort);
+    expect(posted.max_completion_tokens).toBe(PHOTO_MATCHER_CHAT_EXTRA.max_completion_tokens);
+    expect(posted.response_format).toEqual(PHOTO_MATCHER_CHAT_EXTRA.response_format);
+    expect(PHOTO_MATCHER_LIVE_TIMEOUT_MS).toBe(180_000);
+    expect(DEFAULT_GROK_TIMEOUT_MS).toBe(120_000);
+    expect(GROK_RECTS_CHAT_EXTRA.max_completion_tokens).toBe(4096);
+    expect(PHOTO_MATCHER_CHAT_EXTRA.max_completion_tokens).not.toBe(GROK_RECTS_CHAT_EXTRA.max_completion_tokens);
+    expect(result.patch).not.toBeNull();
+    expect(parseGrokPhotoMatcherResult(JSON.parse(result.diagnostics.raw ?? "{}")).ok).toBe(true);
+    expect(result.diagnostics.usageStatus).toBe("unknown");
+    expect(result.diagnostics.usage).toBe("unknown");
+    expect(result.diagnostics.cost).toBe("unknown");
+  });
+
+  it("keeps present usage objects and still marks cost unknown", async () => {
+    const grok: PhotoMatcherClient = {
+      mode: "live",
+      chatCompletions: async () => ({
+        synthetic: false,
+        body: {
+          choices: [{ message: { role: "assistant", content: JSON.stringify(VALID_PHOTOS) }, finish_reason: "stop" }],
+          usage: { prompt_tokens: 12, completion_tokens: 8 },
+        },
+      }),
+    };
+    const result = await runPhotoMatcher({
+      model: twoRoomModel(),
+      overlay: { imageUrl: "https://example.test/overlay.png" },
+      grok,
+    });
+    expect(result.diagnostics.usageStatus).toBe("present");
+    expect(result.diagnostics.usage).toEqual({ prompt_tokens: 12, completion_tokens: 8 });
+    expect(result.diagnostics.cost).toBe("unknown");
+    expect(summarizeGrokUsage(undefined)).toEqual({ usageStatus: "unknown", usage: "unknown", cost: "unknown" });
   });
 
   it("forwards a bounded timeout to the existing Grok client", async () => {

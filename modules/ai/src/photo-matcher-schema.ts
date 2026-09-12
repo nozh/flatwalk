@@ -4,6 +4,16 @@ export const PHOTO_MATCHER_FIXTURE_ID = "grok/photo-matcher.synthetic";
 export const PHOTO_MATCHER_54541_FIXTURE_ID = "grok/photo-matcher.54541";
 export const PHOTO_MATCHER_LOW_CONFIDENCE = 0.6;
 export const PHOTO_MATCHER_LIVE_TIMEOUT_MS = 180_000;
+/**
+ * Matcher-only chat extras. grok-4.6 defaults to reasoning_effort=high;
+ * Parser grok-rects success with similar bounds is not proof for 17-photo Matcher.
+ * Do not change DEFAULT_GROK_TIMEOUT_MS or GROK_RECTS_CHAT_EXTRA from here.
+ */
+export const PHOTO_MATCHER_CHAT_EXTRA = {
+  reasoning_effort: "low",
+  max_completion_tokens: 8192,
+  response_format: { type: "json_object" },
+} as const;
 
 export const FLOORS = ["parquet", "tile", "laminate", "unknown"] as const;
 export const WALL_TONES = ["light", "dark", "colored"] as const;
@@ -64,6 +74,20 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isConfidence(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1;
+}
+
+export type MatcherUsageSummary = {
+  usageStatus: "present" | "unknown";
+  usage: unknown;
+  cost: "unknown";
+};
+
+/** Missing provider usage/cost is unknown, never a fabricated zero. */
+export function summarizeGrokUsage(usage: unknown): MatcherUsageSummary {
+  if (usage == null) {
+    return { usageStatus: "unknown", usage: "unknown", cost: "unknown" };
+  }
+  return { usageStatus: "present", usage, cost: "unknown" };
 }
 
 export function extractJsonText(content: string): string {

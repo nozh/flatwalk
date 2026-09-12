@@ -46,6 +46,7 @@ export {
 } from "./geometry-repair.js";
 export {
   PHOTO_MATCHER_54541_FIXTURE_ID,
+  PHOTO_MATCHER_CHAT_EXTRA,
   PHOTO_MATCHER_FIXTURE_ID,
   PHOTO_MATCHER_LIVE_TIMEOUT_MS,
   PHOTO_MATCHER_LOW_CONFIDENCE,
@@ -55,6 +56,7 @@ export {
   photoMatcherPrompt,
   photoMatcherResultSchema,
   runPhotoMatcher,
+  summarizeGrokUsage,
   type PhotoMatcherInput,
   type PhotoMatcherOutput,
 } from "./photo-matcher.js";

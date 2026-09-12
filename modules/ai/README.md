@@ -123,7 +123,9 @@ const { patch, diagnostics } = await runPhotoMatcher({
 if (patch) apply(accepted, patch, { schemaVersion: "0.1", modelId: accepted.id, baseRevision: accepted.revision, currentRevision: accepted.revision, changes: [] });
 ```
 
-Режим `fixture` по умолчанию читает `fixtures/grok/photo-matcher.synthetic.json`. Для listing 54541 используйте `fixtureId: PHOTO_MATCHER_54541_FIXTURE_ID` (`fixtures/grok/photo-matcher.54541.json`, `synthetic: true`, ID ручной модели). Чужие ID и стена не с контура комнаты отбрасываются в `diagnostics.dropped`. `roomId: null` даёт два `set: null` на room/faces. Защиту `human` делает Resolver. Живой прогон 17 фото + overlay предпринят один раз с `timeoutMs: PHOTO_MATCHER_LIVE_TIMEOUT_MS` (180 с) и завершился `AdapterError.code=timeout`; это не live-доказательство качества.
+Режим `fixture` по умолчанию читает `fixtures/grok/photo-matcher.synthetic.json`. Для listing 54541 используйте `fixtureId: PHOTO_MATCHER_54541_FIXTURE_ID` (`fixtures/grok/photo-matcher.54541.json`, `synthetic: true`, ID ручной модели). Живой сохранённый ответ: `fixtures/grok/photo-matcher.54541.live.json` (`synthetic: false`). Чужие ID и стена не с контура комнаты отбрасываются в `diagnostics.dropped`. `roomId: null` даёт два `set: null` на room/faces. Защиту `human` делает Resolver.
+
+Вызов Matcher передаёт **свои** `PHOTO_MATCHER_CHAT_EXTRA` (`reasoning_effort: low`, `max_completion_tokens: 8192`, `response_format.json_object`) и `timeoutMs: PHOTO_MATCHER_LIVE_TIMEOUT_MS` (180 с) в существующий `createGrokClient`. Это не общие defaults клиента (`DEFAULT_GROK_TIMEOUT_MS` = 120 с) и не `GROK_RECTS_CHAT_EXTRA` Parser. Отсутствующие usage/cost в diagnostics — `"unknown"`, не ноль. Live 54541 (17 JPEG + aligned overlay) завершился HTTP completion за ~32 с; см. `docs/modules/photo-matcher.md`.
 
 Проба (ручная геометрия 54541, не распознавание):
 

@@ -87,6 +87,7 @@ function staticData(): Plugin {
 
 export default defineConfig({
   root: viewerRoot,
+  resolve: { dedupe: ['three'] },
   server: { port: 5173, strictPort: true, fs: { allow: [viewerRoot, repoRoot] } },
   preview: { port: 4173, strictPort: true },
   plugins: [staticData()],

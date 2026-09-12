@@ -1,13 +1,27 @@
 import type { ListingView, PhotoView } from './view-model';
 import type { Overlay } from './plan-overlay';
-import { facedWalls, galleryCaption, photosFor, renderGallery, renderRoomList, renderRoomPanel, renderStageStatus, type Selection } from './panels';
+import type { WalkPrep } from './walk-prep';
+import type { SceneController, SceneHooks } from './walk-scene';
+import { formatArea } from './labels';
+import { facedWalls, galleryCaption, photosFor, renderGallery, renderRoomList, renderRoomPanel, renderStageStatus, type Selection, type StageView } from './panels';
 
 export type ListingController = {
   select(selection: Selection): void;
   dispose(): void;
+  /** Read-only scene diagnostics for browser checks; null until a scene is mounted. */
+  inspect(): ReturnType<SceneController['inspect']> | null;
 };
 
-type SceneMount = (container: HTMLElement) => { dispose(): void };
+type PlaceholderMount = (container: HTMLElement) => { dispose(): void };
+type WalkMount = (container: HTMLElement, hooks: SceneHooks) => SceneController;
+
+export type ListingDeps = {
+  /** Empty three.js stage used while Builder has no scene for this model. */
+  mountScene?: PlaceholderMount;
+  /** Builder scene with Geometry Core walk; used when prep.scene exists. */
+  mountWalk?: WalkMount;
+  prep?: WalkPrep;
+};
 
 const wrap = (index: number, length: number) => (index + length) % length;
 
@@ -30,7 +44,7 @@ function clickedBackdrop(dialog: HTMLDialogElement, event: MouseEvent): boolean 
   return event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom;
 }
 
-export function mountListing(root: HTMLElement, view: ListingView, deps: { mountScene?: SceneMount } = {}): ListingController {
+export function mountListing(root: HTMLElement, view: ListingView, deps: ListingDeps = {}): ListingController {
   const app = root.querySelector<HTMLElement>('.app');
   const roomList = root.querySelector<HTMLElement>('#room-list');
   const panel = root.querySelector<HTMLElement>('#room-panel');
@@ -39,17 +53,26 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: { mount
   const sceneSlot = root.querySelector<HTMLElement>('#scene-slot');
   const stageStatus = root.querySelector<HTMLElement>('#stage-status');
   const stage = root.querySelector<HTMLElement>('.stage');
+  const hud = root.querySelector<HTMLElement>('#walk-hud');
+  const hudRoom = root.querySelector<HTMLElement>('#hud-room');
+  const hudArea = root.querySelector<HTMLElement>('#hud-area');
+  const walkButton = root.querySelector<HTMLButtonElement>('button[data-action="walk"]');
   const about = root.querySelector<HTMLDialogElement>('#about-dialog');
   const lightbox = root.querySelector<HTMLDialogElement>('#lightbox');
   const lightboxImage = root.querySelector<HTMLImageElement>('#lightbox-image');
   const lightboxCaption = root.querySelector<HTMLElement>('#lightbox-caption');
   const toast = root.querySelector<HTMLElement>('#toast');
   const overlayMode = (stagePlan?.dataset.mode ?? 'empty') as Overlay['mode'];
+  const prep = deps.prep;
+  const walkAvailable = Boolean(prep?.walk.available);
+  const walkable = (roomId: string) => walkAvailable && Boolean(prep?.walk.polygons[roomId]);
 
   let selected: Selection = 'all';
   let galleryIndex = 0;
-  let activeView: 'plan' | 'scene' = 'plan';
-  let scene: { dispose(): void } | undefined;
+  let activeView: StageView = 'plan';
+  let lastSceneView: 'top' | 'scene' = 'scene';
+  let scene: SceneController | undefined;
+  let placeholder: { dispose(): void } | undefined;
   let shown: { set: PhotoView[]; index: number; scope: string | null } | null = null;
   let toastTimer: number | undefined;
 
@@ -75,13 +98,13 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: { mount
     }
   }
 
-  function select(next: Selection): void {
+  function select(next: Selection, scroll = true): void {
     selected = view.rooms.some((room) => room.id === next) ? next : 'all';
     galleryIndex = 0;
     if (roomList) roomList.innerHTML = renderRoomList(view, selected);
-    if (panel) panel.innerHTML = renderRoomPanel(view, selected);
+    if (panel) panel.innerHTML = renderRoomPanel(view, selected, { walkable });
     updateMarks();
-    if (selected !== 'all' && panel && typeof panel.scrollIntoView === 'function') {
+    if (scroll && selected !== 'all' && panel && typeof panel.scrollIntoView === 'function') {
       panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
   }
@@ -114,6 +137,7 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: { mount
     const scope = selected === 'all' ? null : view.rooms.find((room) => room.id === selected)?.label ?? null;
     shown = { set, index: wrap(index, set.length), scope };
     renderLightbox();
+    scene?.pause(true);
     showDialog(lightbox);
   }
 
@@ -128,16 +152,81 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: { mount
     shown = null;
   }
 
-  function switchView(next: 'plan' | 'scene'): void {
+  // ----- stage: plan, top, overview, walk -----
+
+  const hooks: SceneHooks = {
+    onRoom(roomId) {
+      const room = roomId ? view.rooms.find((item) => item.id === roomId) : undefined;
+      if (hudRoom) hudRoom.textContent = room ? room.label : 'Вне помещений';
+      const area = roomId && prep?.walk.areas?.rooms[roomId];
+      if (hudArea) hudArea.textContent = area ? `≈ ${formatArea(area)} по модели` : '';
+      if (room && selected !== room.id) select(room.id);
+    },
+    onLabel(roomId) {
+      enterRoom(roomId);
+    },
+  };
+
+  function ensureScene(): SceneController | undefined {
+    if (scene || !sceneSlot) return scene;
+    if (prep?.scene && deps.mountWalk) {
+      scene = deps.mountWalk(sceneSlot, hooks);
+      return scene;
+    }
+    if (!placeholder && deps.mountScene) placeholder = deps.mountScene(sceneSlot);
+    return undefined;
+  }
+
+  function showView(next: StageView): void {
     activeView = next;
     app?.setAttribute('data-view', next);
-    if (stagePlan) stagePlan.hidden = next === 'scene';
+    if (stagePlan) stagePlan.hidden = next !== 'plan';
     if (stageScene) stageScene.hidden = next === 'plan';
+    if (hud) hud.hidden = next !== 'walk';
     for (const button of root.querySelectorAll<HTMLButtonElement>('button[data-view]')) {
       button.setAttribute('aria-pressed', String(button.dataset.view === next));
     }
-    if (stageStatus) stageStatus.textContent = renderStageStatus(next, overlayMode);
-    if (next === 'scene' && !scene && sceneSlot && deps.mountScene) scene = deps.mountScene(sceneSlot);
+    const label = walkButton?.querySelector('.walk-label');
+    if (label) label.textContent = next === 'walk' ? 'Выйти из прогулки' : 'Прогулка';
+    if (stageStatus) stageStatus.textContent = renderStageStatus(next, overlayMode, prep);
+  }
+
+  function switchView(next: 'plan' | 'top' | 'scene'): void {
+    if (next === 'plan') { showView('plan'); return; }
+    if (next === 'top' && !prep?.scene) return;
+    lastSceneView = next;
+    const controller = ensureScene();
+    controller?.setMode(next === 'top' ? 'top' : 'overview');
+    showView(next);
+  }
+
+  function focusCanvas(): void {
+    sceneSlot?.querySelector<HTMLElement>('canvas')?.focus({ preventScroll: true });
+  }
+
+  function startWalk(): void {
+    if (!walkAvailable) return;
+    const controller = ensureScene();
+    if (!controller) return;
+    // Show the stage first: focusing a canvas inside a hidden container fails and keys would stay on the toolbar button.
+    showView('walk');
+    controller.setMode('walk');
+    focusCanvas();
+  }
+
+  function exitWalk(): void {
+    if (activeView !== 'walk') return;
+    scene?.setMode(lastSceneView === 'top' ? 'top' : 'overview');
+    showView(lastSceneView);
+  }
+
+  function enterRoom(roomId: string): void {
+    if (!walkable(roomId)) return;
+    const controller = ensureScene();
+    if (!controller) return;
+    showView('walk');
+    if (controller.enterRoom(roomId)) focusCanvas();
+    else { showView(lastSceneView); notify('В этой комнате негде встать: контур не найден'); }
   }
 
   function toggleMarks(button: HTMLButtonElement): void {
@@ -155,6 +244,11 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: { mount
     }
   }
 
+  async function lockMouse(): Promise<void> {
+    const controller = ensureScene();
+    if (!controller || !(await controller.lockMouse())) notify('Потяните по 3D-сцене, чтобы осмотреться');
+  }
+
   function photoIndexIn(set: PhotoView[], id: string): number {
     return Math.max(0, set.findIndex((photo) => photo.id === id));
   }
@@ -162,12 +256,14 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: { mount
   const onClick = (event: Event) => {
     const target = event.target as HTMLElement | null;
     if (!target) return;
+    const button = target.closest<HTMLButtonElement>('button');
+    if (button?.disabled) return;
 
     const selectButton = target.closest<HTMLElement>('[data-select]');
     if (selectButton?.dataset.select) { select(selectButton.dataset.select); return; }
 
     const roomMark = target.closest<SVGElement>('[data-room]');
-    if (roomMark?.dataset.room) { select(roomMark.dataset.room); return; }
+    if (roomMark?.dataset.room && !roomMark.hasAttribute('data-action')) { select(roomMark.dataset.room); return; }
 
     const thumb = target.closest<HTMLElement>('.thumb[data-photo]');
     if (thumb?.dataset.photo) {
@@ -181,18 +277,23 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: { mount
     if (hero) { openLightbox(currentSet(), galleryIndex); return; }
 
     const viewButton = target.closest<HTMLButtonElement>('button[data-view]');
-    if (viewButton?.dataset.view === 'plan' || viewButton?.dataset.view === 'scene') { switchView(viewButton.dataset.view); return; }
+    const nextView = viewButton?.dataset.view;
+    if (nextView === 'plan' || nextView === 'top' || nextView === 'scene') { switchView(nextView); return; }
 
-    const action = target.closest<HTMLButtonElement>('[data-action]')?.dataset.action;
-    switch (action) {
+    const actionButton = target.closest<HTMLButtonElement>('[data-action]');
+    switch (actionButton?.dataset.action) {
       case 'gallery-prev': pick(galleryIndex - 1); break;
       case 'gallery-next': pick(galleryIndex + 1); break;
       case 'lightbox-prev': stepLightbox(-1); break;
       case 'lightbox-next': stepLightbox(1); break;
       case 'lightbox-close': closeLightbox(); break;
-      case 'about': showDialog(about); break;
-      case 'toggle-marks': toggleMarks(target.closest('[data-action]') as HTMLButtonElement); break;
+      case 'about': scene?.pause(true); showDialog(about); break;
+      case 'toggle-marks': toggleMarks(actionButton as HTMLButtonElement); break;
       case 'fullscreen': void toggleFullscreen(); break;
+      case 'walk': if (activeView === 'walk') exitWalk(); else startWalk(); break;
+      case 'walk-exit': exitWalk(); break;
+      case 'enter-room': if (actionButton?.dataset.room) enterRoom(actionButton.dataset.room); break;
+      case 'lock-mouse': void lockMouse(); break;
       default: break;
     }
   };
@@ -206,10 +307,14 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: { mount
   };
 
   const onDocumentKeydown = (event: KeyboardEvent) => {
-    if (!lightbox?.open) return;
-    if (event.key === 'ArrowRight') { event.preventDefault(); stepLightbox(1); }
-    else if (event.key === 'ArrowLeft') { event.preventDefault(); stepLightbox(-1); }
-    else if (event.key === 'Escape') { event.preventDefault(); closeLightbox(); }
+    if (lightbox?.open) {
+      if (event.key === 'ArrowRight') { event.preventDefault(); stepLightbox(1); }
+      else if (event.key === 'ArrowLeft') { event.preventDefault(); stepLightbox(-1); }
+      else if (event.key === 'Escape') { event.preventDefault(); closeLightbox(); }
+      return;
+    }
+    if (about?.open) return;
+    if (event.key === 'Escape' && activeView === 'walk' && !document.pointerLockElement) exitWalk();
   };
 
   const hot = (event: Event, on: boolean) => {
@@ -221,9 +326,26 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: { mount
   const onOver = (event: Event) => hot(event, true);
   const onOut = (event: Event) => hot(event, false);
 
+  // Touch nudges for the walk (prototype pattern): press to step, release to stop.
+  const touchKey = (event: Event) => (event.target as HTMLElement | null)?.closest?.<HTMLElement>('#walk-hud [data-key]')?.dataset.key;
+  const onPointerDown = (event: Event) => {
+    const code = touchKey(event);
+    if (!code) return;
+    event.preventDefault();
+    const target = event.target as HTMLElement;
+    if (typeof target.setPointerCapture === 'function' && 'pointerId' in event) {
+      try { target.setPointerCapture((event as PointerEvent).pointerId); } catch { /* not supported */ }
+    }
+    scene?.input(code, true);
+  };
+  const onPointerUp = (event: Event) => {
+    const code = touchKey(event);
+    if (code) scene?.input(code, false);
+  };
+
   const onLightboxClick = (event: Event) => { if (lightbox && clickedBackdrop(lightbox, event as MouseEvent)) closeLightbox(); };
   const onAboutClick = (event: Event) => { if (about && clickedBackdrop(about, event as MouseEvent)) hideDialog(about); };
-  const onLightboxClose = () => { shown = null; };
+  const onDialogClose = () => { shown = null; scene?.pause(false); };
 
   root.addEventListener('click', onClick);
   root.addEventListener('keydown', onRootKeydown);
@@ -231,16 +353,20 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: { mount
   root.addEventListener('mouseout', onOut);
   root.addEventListener('focusin', onOver);
   root.addEventListener('focusout', onOut);
+  root.addEventListener('pointerdown', onPointerDown);
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) root.addEventListener(type, onPointerUp);
   document.addEventListener('keydown', onDocumentKeydown);
   lightbox?.addEventListener('click', onLightboxClick);
-  lightbox?.addEventListener('close', onLightboxClose);
+  lightbox?.addEventListener('close', onDialogClose);
   about?.addEventListener('click', onAboutClick);
+  about?.addEventListener('close', onDialogClose);
 
   select('all');
-  switchView(activeView);
+  showView('plan');
 
   return {
-    select,
+    select: (next) => select(next),
+    inspect: () => scene?.inspect() ?? null,
     dispose() {
       root.removeEventListener('click', onClick);
       root.removeEventListener('keydown', onRootKeydown);
@@ -248,13 +374,18 @@ export function mountListing(root: HTMLElement, view: ListingView, deps: { mount
       root.removeEventListener('mouseout', onOut);
       root.removeEventListener('focusin', onOver);
       root.removeEventListener('focusout', onOut);
+      root.removeEventListener('pointerdown', onPointerDown);
+      for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) root.removeEventListener(type, onPointerUp);
       document.removeEventListener('keydown', onDocumentKeydown);
       lightbox?.removeEventListener('click', onLightboxClick);
-      lightbox?.removeEventListener('close', onLightboxClose);
+      lightbox?.removeEventListener('close', onDialogClose);
       about?.removeEventListener('click', onAboutClick);
+      about?.removeEventListener('close', onDialogClose);
       window.clearTimeout(toastTimer);
       scene?.dispose();
       scene = undefined;
+      placeholder?.dispose();
+      placeholder = undefined;
     },
   };
 }

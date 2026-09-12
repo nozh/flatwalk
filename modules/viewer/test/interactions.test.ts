@@ -6,6 +6,8 @@ import { validateFlatModel, type FlatModel } from '@flatwalk/contract';
 import { renderShell } from '../src/shell';
 import { listingView } from '../src/view-model';
 import { mountListing, type ListingController } from '../src/interactions';
+import { prepareWalk } from '../src/walk-prep';
+import type { SceneController, SceneHooks } from '../src/walk-scene';
 
 const dir = dirname(fileURLToPath(import.meta.url));
 const reference = JSON.parse(readFileSync(join(dir, '../../../fixtures/54541/flat.model.json'), 'utf8'));
@@ -157,5 +159,96 @@ describe('stage', () => {
     const root = setup();
     click(root.querySelector('.topbar button[data-action="about"]'));
     expect(root.querySelector<HTMLDialogElement>('#about-dialog')?.open).toBe(true);
+  });
+});
+
+describe('walk', () => {
+  let hooks: SceneHooks = {};
+  const fake = {
+    mode: 'overview' as const,
+    setMode: vi.fn(),
+    enterRoom: vi.fn(() => true),
+    input: vi.fn(),
+    lockMouse: vi.fn(async () => true),
+    pause: vi.fn(),
+    reset: vi.fn(),
+    dispose: vi.fn(),
+    inspect: vi.fn(),
+  };
+  const mountWalk = vi.fn((_host: HTMLElement, received: SceneHooks) => { hooks = received; return fake as unknown as SceneController; });
+
+  function setupWalk() {
+    const parsed = model(reference);
+    const prep = prepareWalk(parsed);
+    const root = document.createElement('div');
+    root.innerHTML = renderShell({ kind: 'ready', model: parsed, source: { kind: 'fixture' }, plan: { status: 'ok' }, prep });
+    document.body.replaceChildren(root);
+    controller = mountListing(root, listingView(parsed, { kind: 'fixture' }), { mountScene, mountWalk, prep });
+    return root;
+  }
+
+  afterEach(() => { for (const spy of Object.values(fake)) if (typeof spy === 'function' && 'mockClear' in spy) spy.mockClear(); mountWalk.mockClear(); });
+
+  it('starts the walk from the toolbar, shows the HUD and leaves it with Escape', () => {
+    const root = setupWalk();
+    click(root.querySelector('button[data-action="walk"]'));
+    expect(mountWalk).toHaveBeenCalledTimes(1);
+    expect(fake.setMode).toHaveBeenLastCalledWith('walk');
+    expect(root.querySelector('.app')?.getAttribute('data-view')).toBe('walk');
+    expect(root.querySelector<HTMLElement>('#walk-hud')?.hidden).toBe(false);
+    expect(root.querySelector('button[data-action="walk"]')?.textContent).toContain('Выйти');
+    expect(root.querySelector('#stage-status')?.textContent).toMatch(/WASD/);
+    key(document, 'Escape');
+    expect(fake.setMode).toHaveBeenLastCalledWith('overview');
+    expect(root.querySelector('.app')?.getAttribute('data-view')).toBe('scene');
+    expect(root.querySelector<HTMLElement>('#walk-hud')?.hidden).toBe(true);
+    expect(mountScene).not.toHaveBeenCalled();
+  });
+
+  it('switches between top and overview and reports Builder in the status', () => {
+    const root = setupWalk();
+    click(root.querySelector('button[data-view="top"]'));
+    expect(fake.setMode).toHaveBeenLastCalledWith('top');
+    expect(root.querySelector('#stage-status')?.textContent).toMatch(/Builder/);
+    click(root.querySelector('button[data-view="scene"]'));
+    expect(fake.setMode).toHaveBeenLastCalledWith('overview');
+    expect(mountWalk).toHaveBeenCalledTimes(1);
+  });
+
+  it('follows the player into rooms: HUD text and sidebar selection', () => {
+    const root = setupWalk();
+    click(root.querySelector('button[data-action="walk"]'));
+    hooks.onRoom?.('r3');
+    expect(root.querySelector('#hud-room')?.textContent).toBe('Кухня');
+    expect(root.querySelector('#hud-area')?.textContent).toMatch(/м²/);
+    expect(root.querySelector('#room-list button[data-select="r3"]')?.getAttribute('aria-current')).toBe('true');
+    hooks.onRoom?.(null);
+    expect(root.querySelector('#hud-room')?.textContent).toMatch(/вне помещений/i);
+  });
+
+  it('teleports into the selected room from the panel and from a projected label', () => {
+    const root = setupWalk();
+    click(root.querySelector('#room-list button[data-select="r4"]'));
+    click(root.querySelector('#room-panel button[data-action="enter-room"]'));
+    expect(fake.enterRoom).toHaveBeenLastCalledWith('r4');
+    expect(root.querySelector('.app')?.getAttribute('data-view')).toBe('walk');
+    hooks.onLabel?.('r9');
+    expect(fake.enterRoom).toHaveBeenLastCalledWith('r9');
+  });
+
+  it('routes touch buttons and mouse lock to the scene and pauses it behind dialogs', () => {
+    const root = setupWalk();
+    click(root.querySelector('button[data-action="walk"]'));
+    const up = root.querySelector('#walk-hud button[data-key="KeyW"]');
+    up?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 1 }));
+    expect(fake.input).toHaveBeenLastCalledWith('KeyW', true);
+    up?.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 1 }));
+    expect(fake.input).toHaveBeenLastCalledWith('KeyW', false);
+    click(root.querySelector('#walk-hud button[data-action="lock-mouse"]'));
+    expect(fake.lockMouse).toHaveBeenCalledTimes(1);
+    click(root.querySelector('.topbar button[data-action="about"]'));
+    expect(fake.pause).toHaveBeenLastCalledWith(true);
+    root.querySelector<HTMLDialogElement>('#about-dialog')?.close();
+    expect(fake.pause).toHaveBeenLastCalledWith(false);
   });
 });

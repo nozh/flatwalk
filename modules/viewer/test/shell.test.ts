@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { validateFlatModel, type FlatModel } from '@flatwalk/contract';
 import { renderShell } from '../src/shell';
+import { prepareWalk } from '../src/walk-prep';
 
 const dir = dirname(fileURLToPath(import.meta.url));
 const synthetic = JSON.parse(readFileSync(join(dir, 'fixtures/viewer-synthetic.model.json'), 'utf8'));
@@ -70,7 +71,7 @@ describe('renderShell', () => {
     expect(root.querySelector('#room-panel h2')?.textContent).toBe('Вся квартира');
     expect(root.querySelector('button[data-view="scene"]')).not.toBeNull();
     expect(root.querySelector('button[data-action="toggle-marks"]')?.getAttribute('aria-pressed')).toBe('true');
-    const walk = root.querySelector<HTMLButtonElement>('button.walk-button');
+    const walk = root.querySelector<HTMLButtonElement>('button[data-action="walk"]');
     expect(walk?.disabled).toBe(true);
     expect(root.querySelector('dialog#about-dialog')).not.toBeNull();
     expect(root.querySelector('dialog#lightbox')).not.toBeNull();
@@ -78,5 +79,40 @@ describe('renderShell', () => {
     expect(main?.textContent).not.toMatch(/\b[rwop]\d+\b/);
     expect(main?.textContent).not.toContain('cityexpert-54541');
     expect(root.querySelector('a[href^="https://cityexpert.rs"]')?.getAttribute('target')).toBe('_blank');
+  });
+});
+
+describe('renderShell with Builder and Geometry Core prepared', () => {
+  it('enables the walk, offers top and overview views and lists geometry diagnostics', () => {
+    const parsed = model(reference);
+    const root = mount(renderShell({ kind: 'ready', model: parsed, source: { kind: 'fixture' }, plan: { status: 'ok' }, prep: prepareWalk(parsed) }));
+    const walk = root.querySelector<HTMLButtonElement>('button[data-action="walk"]');
+    expect(walk?.disabled).toBe(false);
+    expect(root.querySelector('#walk-hint')?.textContent).toMatch(/WASD/);
+    expect(root.querySelector('button[data-view="top"]')).not.toBeNull();
+    expect(root.querySelector<HTMLButtonElement>('button[data-view="scene"]')?.disabled).toBe(false);
+    expect(root.querySelector<HTMLElement>('#walk-hud')?.hidden).toBe(true);
+    expect(root.querySelectorAll('#walk-hud button[data-key]')).toHaveLength(6);
+    expect(root.querySelector('#walk-hud button[data-action="lock-mouse"]')).not.toBeNull();
+    expect(root.querySelectorAll('.about-geometry li').length).toBeGreaterThanOrEqual(4);
+    expect(root.querySelector('.about-geometry')?.textContent).toContain('прогулка доступна');
+    expect(root.querySelector('.scene-empty')).toBeNull();
+  });
+
+  it('keeps the scene views but disables the walk with the reason when there is no start', () => {
+    const parsed = model(synthetic);
+    const root = mount(renderShell({ kind: 'ready', model: parsed, source: { kind: 'static' }, plan: { status: 'unavailable' }, prep: prepareWalk(parsed) }));
+    expect(root.querySelector<HTMLButtonElement>('button[data-action="walk"]')?.disabled).toBe(true);
+    expect(root.querySelector('#walk-hint')?.textContent).toMatch(/вход|старт/i);
+    expect(root.querySelector<HTMLButtonElement>('button[data-view="top"]')?.disabled).toBe(false);
+    expect(root.querySelector('.about-geometry')?.textContent).toMatch(/недоступна/);
+  });
+
+  it('disables the top view and the walk without a prepared scene but keeps the overview as an empty stage', () => {
+    const root = mount(renderShell({ kind: 'ready', model: model(synthetic), source: { kind: 'static' }, plan: { status: 'unavailable' } }));
+    expect(root.querySelector<HTMLButtonElement>('button[data-view="top"]')?.disabled).toBe(true);
+    expect(root.querySelector<HTMLButtonElement>('button[data-view="scene"]')?.disabled).toBe(false);
+    expect(root.querySelector<HTMLButtonElement>('button[data-action="walk"]')?.disabled).toBe(true);
+    expect(root.textContent).toContain('3D-сцена ещё не построена');
   });
 });

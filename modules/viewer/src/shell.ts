@@ -3,14 +3,15 @@ import { listingView } from './view-model';
 import type { DataSource } from './source';
 import type { ReportResult } from './load-report';
 import { buildOverlay, renderOverlaySvg } from './plan-overlay';
-import { renderAbout, renderAssumptionStrip, renderLightbox, renderRoomList, renderRoomPanel, renderStageStatus } from './panels';
+import { renderAbout, renderAssumptionStrip, renderLightbox, renderRoomList, renderRoomPanel, renderStageStatus, renderWalkHud } from './panels';
+import type { WalkPrep } from './walk-prep';
 import { escapeHtml, icon } from './html';
 
 export type ViewerState =
   | { kind: 'loading' }
   | { kind: 'missing'; source: DataSource; url: string }
   | { kind: 'invalid'; issues: string[] }
-  | { kind: 'ready'; model: FlatModel; source: DataSource; plan: { status: 'ok' | 'unavailable' }; report?: ReportResult };
+  | { kind: 'ready'; model: FlatModel; source: DataSource; plan: { status: 'ok' | 'unavailable' }; report?: ReportResult; prep?: WalkPrep };
 
 const NO_REPORT: ReportResult = { status: 'missing', url: '' };
 
@@ -52,6 +53,15 @@ export function renderShell(state: ViewerState): string {
     ? `<div class="stage-empty"><p>Исходный план недоступен, а геометрии в модели пока нет.</p><p class="muted">Здесь появится план с разметкой, как только Parser вернёт стены.</p></div>`
     : renderOverlaySvg(overlay);
   const sourceChip = state.source.kind === 'fixture' ? 'Эталон 54541' : 'Папка запуска';
+  const prep = state.prep;
+  const hasScene = Boolean(prep?.scene);
+  const walkable = Boolean(prep?.walk.available);
+  const walkHint = !prep
+    ? 'после сборки 3D-сцены'
+    : prep.walk.available ? 'WASD и мышь, Esc — выход' : `недоступна: ${prep.walk.reason}`;
+  const sceneEmpty = hasScene
+    ? ''
+    : `<p class="scene-empty">3D-сцена ещё не построена: ${escapeHtml(prep?.sceneError ?? 'Builder не подключён')}.</p>`;
   const listingLink = view.source.url
     ? `<a class="topbar-link" href="${escapeHtml(view.source.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(view.source.siteLabel)}${icon('external')}</a>`
     : `<span>${escapeHtml(view.source.siteLabel)}</span>`;
@@ -73,12 +83,13 @@ export function renderShell(state: ViewerState): string {
         <div class="stage-toolbar">
           <div class="segmented" role="group" aria-label="Вид">
             <button type="button" data-view="plan" aria-pressed="true">${icon('plan')}План</button>
-            <button type="button" data-view="scene" aria-pressed="false">${icon('cube')}3D-сцена</button>
+            <button type="button" data-view="top" aria-pressed="false"${hasScene ? '' : ' disabled'}>${icon('layers')}Сверху</button>
+            <button type="button" data-view="scene" aria-pressed="false">${icon('cube')}Обзор</button>
           </div>
           <button type="button" class="toggle" data-action="toggle-marks" aria-pressed="true"${overlay.mode === 'plan' ? '' : ' hidden'}>${icon('marks')}Разметка модели</button>
           <div class="walk">
-            <button type="button" class="walk-button" disabled aria-describedby="walk-hint">${icon('walk')}Прогулка</button>
-            <span id="walk-hint" class="walk-hint">после сборки 3D-сцены</span>
+            <button type="button" class="walk-button" data-action="walk"${walkable ? '' : ' disabled'} aria-describedby="walk-hint">${icon('walk')}<span class="walk-label">Прогулка</span></button>
+            <span id="walk-hint" class="walk-hint">${escapeHtml(walkHint)}</span>
           </div>
           <button type="button" class="icon-button stage-fullscreen" data-action="fullscreen" aria-label="Во весь экран" title="Во весь экран">${icon('expand')}</button>
         </div>
@@ -86,7 +97,8 @@ export function renderShell(state: ViewerState): string {
           <div class="stage-plan" id="stage-plan" data-mode="${overlay.mode}">${stage}</div>
           <div class="stage-scene" id="stage-scene" hidden>
             <div id="scene-slot" class="scene-slot"></div>
-            <p class="scene-empty">3D-сцена ещё не построена: Builder не подключён.</p>
+            ${sceneEmpty}
+            <div id="walk-hud" class="walk-hud" hidden>${renderWalkHud()}</div>
           </div>
         </div>
         <p class="stage-status" id="stage-status" role="status">${escapeHtml(renderStageStatus('plan', overlay.mode))}</p>
@@ -98,7 +110,7 @@ export function renderShell(state: ViewerState): string {
       </aside>
     </main>
     <footer class="assumptions" id="assumption-strip">${renderAssumptionStrip(view, report)}</footer>
-    <dialog class="dialog about" id="about-dialog" aria-labelledby="about-title">${renderAbout(view, report, state.source)}</dialog>
+    <dialog class="dialog about" id="about-dialog" aria-labelledby="about-title">${renderAbout(view, report, state.source, prep)}</dialog>
     <dialog class="lightbox" id="lightbox" aria-label="Фотография">${renderLightbox()}</dialog>
   </div>`;
 }

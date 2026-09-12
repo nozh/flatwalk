@@ -12,7 +12,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@flatwalk/builder": "file:../builder",
     "@flatwalk/contract": "file:../contract",
+    "@flatwalk/geometry": "file:../geometry",
     "three": "0.183.0"
   },
   "devDependencies": {

@@ -166,3 +166,15 @@ describe('renderStageStatus', () => {
     expect(renderStageStatus('scene', 'plan')).toContain('Builder');
   });
 });
+
+describe('renderRoomPanel with a walk available', () => {
+  it('offers to enter the room only when the walk can start there', () => {
+    const withWalk = mount(renderRoomPanel(view, 'r1', { walkable: (id) => id === 'r1' }));
+    expect(withWalk.querySelector('button[data-action="enter-room"]')?.getAttribute('data-room')).toBe('r1');
+    const noPolygon = mount(renderRoomPanel(view, 'r6', { walkable: () => false }));
+    expect(noPolygon.querySelector('button[data-action="enter-room"]')).toBeNull();
+    const plain = mount(renderRoomPanel(view, 'r1'));
+    expect(plain.querySelector('button[data-action="enter-room"]')).toBeNull();
+    expect(mount(renderRoomPanel(view, 'all', { walkable: () => true })).querySelector('button[data-action="enter-room"]')).toBeNull();
+  });
+});

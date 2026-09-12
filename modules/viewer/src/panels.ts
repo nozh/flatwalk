@@ -2,6 +2,7 @@ import type { DataSource } from './source';
 import type { ListingView, PhotoView } from './view-model';
 import type { ReportResult } from './load-report';
 import type { Overlay } from './plan-overlay';
+import type { WalkPrep } from './walk-prep';
 import { countLabel, formatArea, formatMeters, formatPercent } from './labels';
 import { escapeHtml, icon } from './html';
 
@@ -90,7 +91,12 @@ function flatLead(view: ListingView): string {
   return `${first} В модели ${rooms} ${photos}.`;
 }
 
-export function renderRoomPanel(view: ListingView, selected: Selection): string {
+export type PanelOptions = {
+  /** Whether the walk can start inside the room: Geometry Core gave it a polygon and a start exists. */
+  walkable?: (roomId: string) => boolean;
+};
+
+export function renderRoomPanel(view: ListingView, selected: Selection, options: PanelOptions = {}): string {
   if (selected === 'all') {
     const photos = view.photos.length
       ? `<h3 class="panel-section">Все фотографии</h3>${renderThumbGrid(view.photos)}`
@@ -114,11 +120,15 @@ export function renderRoomPanel(view: ListingView, selected: Selection): string 
     gallery = `<h3 class="panel-section">${countLabel(photos.length, ['фотография', 'фотографии', 'фотографий'])}</h3><div class="gallery" id="gallery">${renderGallery(photos, 0)}</div>`;
   }
 
+  const enter = options.walkable?.(room.id)
+    ? `<button type="button" class="enter-room" data-action="enter-room" data-room="${escapeHtml(room.id)}">${icon('walk')}Перейти в комнату${icon('arrow')}</button>`
+    : '';
   return `<header class="panel-head">
       <h2>${escapeHtml(room.label)}</h2>
       <p class="panel-sub">${escapeHtml(room.typeLabel)}</p>
       <p class="panel-origin">${escapeHtml(origin.join(', '))}.</p>
       ${room.question ? `<p class="panel-question"><span class="panel-question-mark">${icon('question')}</span><span><b>Вопрос модели.</b> ${escapeHtml(room.question)}</span></p>` : ''}
+      ${enter}
     </header>${gallery}`;
 }
 
@@ -181,7 +191,7 @@ function reportSection(report: ReportResult): string {
     ${data.review.items.length ? `<p>На ревью ${countLabel(data.review.items.length, ['пункт', 'пункта', 'пунктов'])}:</p><ul class="about-review">${data.review.items.map((item) => `<li>${escapeHtml(item.reason)}${item.suggestion ? ` <span class="muted">${escapeHtml(item.suggestion)}</span>` : ''}</li>`).join('')}</ul>` : ''}`;
 }
 
-export function renderAbout(view: ListingView, report: ReportResult, source: DataSource): string {
+export function renderAbout(view: ListingView, report: ReportResult, source: DataSource, prep?: WalkPrep): string {
   const link = view.source.url
     ? ` <a href="${escapeHtml(view.source.url)}" target="_blank" rel="noopener noreferrer">Открыть объявление${icon('external')}</a>`
     : '';
@@ -217,14 +227,30 @@ export function renderAbout(view: ListingView, report: ReportResult, source: Dat
         ${reportSection(report)}
       </section>
       <section>
+        <h3>Геометрия и сцена</h3>
+        ${prep
+          ? `<ul class="about-geometry">${prep.diagnostics.map((line) => `<li>${escapeHtml(line)}</li>`).join('')}</ul>`
+          : '<p>3D-сцена не собиралась: Builder не подключён.</p>'}
+      </section>
+      <section>
         <h3>Режим</h3>
         <p>${escapeHtml(mode)}</p>
       </section>
     </div>`;
 }
 
-export function renderStageStatus(activeView: 'plan' | 'scene', mode: Overlay['mode']): string {
-  if (activeView === 'scene') return '3D-сцена ещё не построена: Builder не подключён, сцена пуста.';
+export type StageView = 'plan' | 'top' | 'scene' | 'walk';
+
+export function renderStageStatus(activeView: StageView, mode: Overlay['mode'], prep?: WalkPrep, revision?: number): string {
+  if (activeView !== 'plan') {
+    if (!prep) return '3D-сцена ещё не построена: Builder не подключён, сцена пуста.';
+    if (!prep.scene) return `3D-сцена ещё не построена: ${prep.sceneError ?? 'Builder не собрал модель'}.`;
+    const built = `Сцена собрана Builder по ревизии ${revision ?? prep.scene.group.userData.revision ?? 0}: серая коробка L0 без отделки, размеры приблизительные.`;
+    if (activeView === 'walk') return 'Прогулка: WASD или стрелки — идти, Q и E — повернуть, потяните мышью — осмотреться, Esc — выйти. Геометрия L0, размеры приблизительные.';
+    const hint = activeView === 'top' ? 'Вид сверху: колёсико — приблизить, потяните — сдвинуть.' : 'Обзор: потяните, чтобы повернуть, колёсико — приблизить, подпись помещения — войти.';
+    const walk = prep.walk.available ? '' : ` Прогулка недоступна: ${prep.walk.reason}.`;
+    return `${built} ${hint}${walk}`;
+  }
   switch (mode) {
     case 'plan':
       return 'Исходный план с разметкой из модели. 3D-сцена ещё не построена.';
@@ -235,6 +261,23 @@ export function renderStageStatus(activeView: 'plan' | 'scene', mode: Overlay['m
     default:
       return 'Исходный план недоступен, геометрии в модели нет. 3D-сцена ещё не построена.';
   }
+}
+
+export function renderWalkHud(): string {
+  const keysRow = (items: [string, string, string][]) => items.map(([code, glyph, label]) => `<button type="button" data-key="${code}" aria-label="${escapeHtml(label)}">${glyph}</button>`).join('');
+  return `<div class="walk-banner">
+      <span class="live-dot" aria-hidden="true"></span>
+      <span class="hud-room" id="hud-room">Вне помещений</span>
+      <span class="hud-area" id="hud-area"></span>
+      <button type="button" class="hud-button" data-action="lock-mouse" title="Esc — освободить мышь">${icon('eye')}Осмотр мышью</button>
+      <button type="button" class="hud-button" data-action="walk-exit">${icon('close')}Выйти</button>
+    </div>
+    <div class="crosshair" aria-hidden="true"></div>
+    <p class="walk-keys">WASD или стрелки — идти, Q и E — повернуть, Shift — быстрее. Потяните мышью — осмотреться.</p>
+    <div class="touch-controls" aria-label="Кнопки движения">
+      ${keysRow([['KeyQ', '↶', 'Повернуть влево'], ['KeyW', '↑', 'Шаг вперёд'], ['KeyE', '↷', 'Повернуть вправо']])}
+      ${keysRow([['KeyA', '←', 'Шаг влево'], ['KeyS', '↓', 'Шаг назад'], ['KeyD', '→', 'Шаг вправо']])}
+    </div>`;
 }
 
 export function renderLightbox(): string {

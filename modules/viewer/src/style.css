@@ -180,7 +180,7 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible, summary:focus-v
   paint-order: stroke; stroke: #fff; stroke-linejoin: round; pointer-events: none;
 }
 .overlay-room.is-selected .overlay-room-label { fill: var(--green-ink); font-weight: 700; }
-.app[data-view="scene"] .toggle[data-action="toggle-marks"] { display: none; }
+.app:not([data-view="plan"]) .toggle[data-action="toggle-marks"] { display: none; }
 .app[data-marks="off"] .overlay-wall, .app[data-marks="off"] .overlay-opening, .app[data-marks="off"] .overlay-entrance { display: none; }
 
 /* future 3D scene */
@@ -361,4 +361,64 @@ dialog::backdrop { background: #26352799; backdrop-filter: blur(7px); }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ---------- walk HUD (patterns from prototype/src/style.css) ---------- */
+.enter-room {
+  display: inline-flex; align-items: center; gap: 8px; margin-top: 12px;
+  padding: 9px 12px; border-radius: 7px; background: var(--green); color: #f4f5df;
+  font-size: 13px; font-weight: 600;
+}
+.enter-room .icon { width: 16px; height: 16px; }
+.enter-room .icon:last-child { margin-left: 2px; }
+.room-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.room-label {
+  position: absolute; transform: translate(-50%, -50%);
+  padding: 6px 9px; border-radius: 4px; white-space: nowrap;
+  background: #fffef8db; border: 1px solid #ffffffce; backdrop-filter: blur(4px);
+  font-size: 11px; color: #58624f; box-shadow: 0 2px 9px #353c2110; pointer-events: auto;
+}
+.room-label:hover { background: var(--green); color: #fff; }
+.walk-hud { position: absolute; inset: 0; pointer-events: none; }
+.walk-hud > * { pointer-events: auto; }
+.walk-banner {
+  position: absolute; left: 14px; top: 14px; right: 14px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 9px 12px; border-radius: 6px; background: #fffdf4e8; backdrop-filter: blur(8px);
+  font-size: 13px; color: #526549; box-shadow: 0 3px 14px #45513914;
+}
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: #638b4d; }
+.hud-room { font-weight: 700; color: var(--ink); }
+.hud-area { color: var(--muted); font-size: 12px; }
+.hud-button {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--green);
+  border-left: 1px solid #ddd; padding-left: 10px;
+}
+.hud-button:first-of-type { margin-left: auto; }
+.hud-button .icon { width: 14px; height: 14px; }
+.crosshair {
+  position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px;
+  background: #fff; border-radius: 50%; box-shadow: 0 0 0 2px #384c3b50; pointer-events: none;
+}
+.walk-keys {
+  position: absolute; left: 14px; bottom: 14px; margin: 0; max-width: 46ch;
+  padding: 8px 11px; border-radius: 6px; background: #f9fbf3df; backdrop-filter: blur(8px);
+  font-size: 11px; line-height: 1.6; color: #66735f;
+}
+.touch-controls {
+  position: absolute; right: 14px; bottom: 14px;
+  display: grid; grid-template-columns: repeat(3, 34px); gap: 4px;
+}
+.touch-controls button {
+  width: 34px; height: 34px; border-radius: 6px; background: #ffffffe0; border: 1px solid #fff8;
+  color: #476440; font-size: 18px; touch-action: none; user-select: none;
+}
+.touch-controls button:active { background: #d6e4bf; }
+.app[data-view="walk"] .stage-scene { border-color: #c9d6bf; }
+.app[data-view="walk"] .walk-button { background: #fff; color: var(--green); border: 1px solid #c9d6bf; }
+@media (max-width: 860px) {
+  .walk-keys { display: none; }
+  .walk-banner { left: 10px; top: 10px; right: 10px; gap: 6px; padding: 7px 9px; font-size: 12px; }
+  .hud-button { font-size: 0; gap: 0; padding-left: 6px; }
+  .hud-button .icon { width: 16px; height: 16px; }
 }

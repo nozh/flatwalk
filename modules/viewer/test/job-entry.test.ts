@@ -1,5 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mountJobEntry } from '../src/job-entry';
+import { resetHeroFigureCache } from '../src/entry-shell';
+
+afterEach(() => resetHeroFigureCache());
 
 describe('mountJobEntry', () => {
   it('posts one fixture job even if the submit control is activated twice', async () => {

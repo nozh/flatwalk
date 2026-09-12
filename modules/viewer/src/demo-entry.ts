@@ -1,9 +1,41 @@
+import { mountHeroFigure, renderEntry } from './entry-shell';
+
 /** Static showcase: a simulated job opens the explicitly labelled reference apartment. */
+
+const DEFAULT_LISTING =
+  'https://cityexpert.rs/izdavanje-nekretnina/beograd/54541/troiposoban-stan-svetogorska-stari-grad';
+
+const SIMULATED_STEPS = [
+  'Reading the listing materials',
+  'Fitting walls, doorways and windows to the plan',
+  'Raising the rooms and opening the walkthrough',
+];
+
+function renderForm(): string {
+  return `<form class="entry-form">
+      <label class="field-label" for="listing-url">Listing URL</label>
+      <input id="listing-url" class="field-input" type="url" required
+        placeholder="https://cityexpert.rs/…" value="${DEFAULT_LISTING}"
+        aria-describedby="entry-disclosure" spellcheck="false" autocomplete="url" />
+      <p class="demo-note" id="entry-disclosure">This demo does not process the address you enter.
+        Any URL opens the same prepared apartment, listing 54541; your URL is not analyzed and no listing site is contacted.</p>
+      <div class="entry-actions">
+        <button type="submit" class="cta">Build the walkthrough</button>
+        <button type="button" class="cta is-quiet demo-skip">Explore the demo</button>
+      </div>
+    </form>
+    <ol aria-live="polite" aria-label="Simulated build steps" class="demo-steps"></ol>`;
+}
+
 export function mountDemoEntry(root: HTMLElement, open: () => Promise<void>): void {
-  root.innerHTML = `<main class="demo-entry"><div class="demo-card"><span class="demo-badge">FLATWALK · DEMO</span><h1>From a listing —<br>into the apartment</h1><p>Explore the floor plan and photos, then walk through the apartment in 3D.</p><form><label for="listing-url">Listing URL</label><input id="listing-url" type="url" required placeholder="https://cityexpert.rs/…" value="https://cityexpert.rs/izdavanje-nekretnina/beograd/54541/troiposoban-stan-svetogorska-stari-grad"><button type="submit">See how it works →</button></form><p class="demo-note">Processing is simulated in this demo. Any URL opens the same prepared model 54541; the entered URL is not analyzed.</p><ol aria-live="polite" class="demo-steps"></ol><button class="demo-skip" type="button">Open prepared demo</button></div></main>`;
+  root.innerHTML = renderEntry(renderForm());
+  mountHeroFigure(root);
+
   const form = root.querySelector('form')!;
+  const input = root.querySelector<HTMLInputElement>('#listing-url')!;
   const steps = root.querySelector<HTMLOListElement>('.demo-steps')!;
   let busy = false;
+
   async function show(): Promise<void> {
     const url = new URL(window.location.href);
     url.searchParams.set('src', 'fixture');
@@ -11,29 +43,33 @@ export function mountDemoEntry(root: HTMLElement, open: () => Promise<void>): vo
     window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
     await open();
   }
+
   root.querySelector('.demo-skip')!.addEventListener('click', () => {
     if (busy) return;
     busy = true;
     void show();
   });
+
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     if (busy) return;
-    const value = (root.querySelector('input') as HTMLInputElement).value;
-    const input = root.querySelector('input') as HTMLInputElement;
-    if (!/^https?:$/.test(new URL(value).protocol)) {
-      input.setCustomValidity('Enter an http or https URL.'); input.reportValidity(); return;
+    if (!/^https?:$/.test(new URL(input.value).protocol)) {
+      input.setCustomValidity('Enter an http or https URL.');
+      input.reportValidity();
+      return;
     }
     busy = true;
     root.querySelectorAll('button').forEach((button) => { button.disabled = true; });
-    const labels = ['Demo: listing materials', 'Demo: prepared floor plan and model', 'Demo: opening the 3D scene'];
     void (async () => {
-      for (const label of labels) {
-        const item = document.createElement('li'); item.textContent = label; steps.append(item);
+      for (const label of SIMULATED_STEPS) {
+        const item = document.createElement('li');
+        item.textContent = label;
+        steps.append(item);
         await new Promise((resolve) => window.setTimeout(resolve, 650));
       }
       await show();
     })();
   });
-  root.querySelector('input')!.addEventListener('input', (event) => (event.target as HTMLInputElement).setCustomValidity(''));
+
+  input.addEventListener('input', () => input.setCustomValidity(''));
 }

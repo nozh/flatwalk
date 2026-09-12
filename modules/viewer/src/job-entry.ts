@@ -9,6 +9,7 @@ import {
   type JobSnapshot,
 } from './job-api';
 import { escapeHtml } from './html';
+import { mountHeroFigure, renderEntry } from './entry-shell';
 
 export type JobEntryHandlers = {
   origin: string;
@@ -26,6 +27,7 @@ export function mountJobEntry(root: HTMLElement, handlers: JobEntryHandlers): ()
 
   const paint = (html: string) => {
     root.innerHTML = html;
+    mountHeroFigure(root);
     bind();
   };
 
@@ -136,13 +138,16 @@ function isAbort(error: unknown): boolean {
 
 function renderForm(): string {
   return shell(`
-    <p class="demo-note">This local job API runs the existing CLI chain. The default action is the 54541 fixture pipeline (synthetic grok-rects). It does not call paid live APIs. Open prepared demo is a separate labelled fallback and is not used when a job fails.</p>
-    <form>
-      <button type="submit" data-submit>Run fixture job →</button>
+    <form class="entry-form">
+      <p class="field-label">Local job</p>
+      <p class="demo-note">This runs the existing CLI chain through the local job API on the 54541 fixture (synthetic grok-rects geometry). No paid live API is called, and the prepared demo is a separate labelled action that a failed job never falls back to.</p>
+      <div class="entry-actions">
+        <button type="submit" class="cta" data-submit>Run the fixture job</button>
+        <button class="cta is-quiet demo-skip" type="button" data-action="prepared-demo">Explore the demo</button>
+      </div>
     </form>
     <p class="demo-note">Listing photos, if present, are source materials. Fixture geometry is not recognized from those photos.</p>
     <ol aria-live="polite" class="demo-steps"></ol>
-    <button class="demo-skip" type="button" data-action="prepared-demo">Open prepared demo</button>
   `);
 }
 
@@ -158,9 +163,10 @@ function renderProgress(snapshot: JobSnapshot): string {
     return `<li data-stage="${escapeHtml(line.stage)}" data-state="${line.state}"><span>${escapeHtml(line.label)}</span> <span class="demo-note">${status}${detail}</span></li>`;
   }).join('');
   return shell(`
-    <p class="demo-note" role="status">Job ${escapeHtml(snapshot.job.id)} · ${escapeHtml(snapshot.job.status)} · ${escapeHtml(String(snapshot.job.stage))}</p>
-    <ol aria-live="polite" class="demo-steps">${lines}</ol>
-    <button class="demo-skip" type="button" data-action="prepared-demo">Open prepared demo</button>
+    <p class="field-label">Building</p>
+    <p class="demo-note" role="status">Job ${escapeHtml(snapshot.job.id)} — ${escapeHtml(snapshot.job.status)}, stage ${escapeHtml(String(snapshot.job.stage))}</p>
+    <ol aria-live="polite" class="demo-steps is-stages">${lines}</ol>
+    <p class="entry-actions"><button class="cta is-quiet demo-skip" type="button" data-action="prepared-demo">Explore the demo</button></p>
   `);
 }
 
@@ -171,15 +177,17 @@ function renderFailed(origin: string, snapshot: JobSnapshot): string {
     : '<p>The job failed without a detailed reason.</p>';
   const materials = snapshot.materials.map((item) => {
     const href = materialAbsoluteUrl(origin, snapshot.job.id, item.url);
-    return `<li><a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.kind)} · ${escapeHtml(item.assetId)}</a></li>`;
+    return `<li><a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.kind)} — ${escapeHtml(item.assetId)}</a></li>`;
   }).join('');
   return shell(`
-    <div data-job-failed="1">
-      <p role="alert"><b>Job failed.</b> The prepared demo was not opened automatically.</p>
+    <div class="entry-alert" data-job-failed="1">
+      <p class="alert-title" role="alert">Job failed. The prepared demo was not opened automatically.</p>
       ${reasonList}
-      ${materials ? `<p>Available source materials</p><ul class="demo-materials">${materials}</ul>` : '<p>No source materials were stored for this job.</p>'}
-      <p class="actions"><button type="button" data-action="retry" data-submit>Retry job</button></p>
-      <button class="demo-skip" type="button" data-action="prepared-demo">Open prepared demo</button>
+      ${materials ? `<p class="field-label">Available source materials</p><ul class="demo-materials">${materials}</ul>` : '<p class="demo-note">No source materials were stored for this job.</p>'}
+      <p class="entry-actions">
+        <button type="button" class="cta" data-action="retry" data-submit>Retry job</button>
+        <button class="cta is-quiet demo-skip" type="button" data-action="prepared-demo">Explore the demo</button>
+      </p>
     </div>
   `);
 }
@@ -190,13 +198,17 @@ function renderUnavailable(error: unknown, jobId?: string): string {
   const apiDown = status === undefined || status >= 500 || message.includes('Failed to fetch') || message.includes('NetworkError');
   const title = apiDown || status === 0 ? 'Job API is unavailable' : 'Could not load this job';
   return shell(`
-    <p role="alert"><b>${escapeHtml(title)}.</b> ${escapeHtml(message)}</p>
-    ${jobId ? `<p class="demo-note">Job ID ${escapeHtml(jobId)} is still in the URL. Retry starts a new job; it does not reopen the prepared demo.</p>` : ''}
-    <p class="actions"><button type="button" data-action="retry" data-submit>Retry job</button></p>
-    <button class="demo-skip" type="button" data-action="prepared-demo">Open prepared demo</button>
+    <div class="entry-alert">
+      <p class="alert-title" role="alert">${escapeHtml(title)}. ${escapeHtml(message)}</p>
+      ${jobId ? `<p class="demo-note">Job ID ${escapeHtml(jobId)} is still in the URL. Retry starts a new job; it does not reopen the prepared demo.</p>` : ''}
+      <p class="entry-actions">
+        <button type="button" class="cta" data-action="retry" data-submit>Retry job</button>
+        <button class="cta is-quiet demo-skip" type="button" data-action="prepared-demo">Explore the demo</button>
+      </p>
+    </div>
   `);
 }
 
 function shell(body: string): string {
-  return `<main class="demo-entry"><div class="demo-card"><span class="demo-badge">FLATWALK · LOCAL JOB</span><h1>From a listing —<br>into the apartment</h1><p>Explore the floor plan and photos, then walk through the apartment in 3D.</p>${body}</div></main>`;
+  return renderEntry(body);
 }

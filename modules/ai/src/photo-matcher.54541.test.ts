@@ -118,9 +118,7 @@ describe("54541 photo-matcher integration (manual geometry)", () => {
     expect(report.revision).toBe(applied.model.revision);
     const lowConfidencePhotos = ["p8", "p11", "p12", "p17"];
     const reviewPaths = report.review.items.map((item) => item.path);
-    expect(
-      lowConfidencePhotos.every((id) => !reviewPaths.includes(`assets.${id}`)),
-    ).toBe(true);
+    expect(lowConfidencePhotos.every((id) => reviewPaths.includes(`assets.${id}`))).toBe(true);
   });
 
   it("lets Resolver keep a human binding on a clone without rewriting the accepted reference file", async () => {

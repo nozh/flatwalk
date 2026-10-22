@@ -21,9 +21,9 @@
     "@flatwalk/validator": "file:../validator",
     "@types/node": "24.3.1",
     "@types/three": "0.183.0",
-    "happy-dom": "18.0.1",
+    "happy-dom": "21.0.4",
     "typescript": "5.9.2",
-    "vite": "7.3.1",
-    "vitest": "3.2.4"
+    "vite": "7.3.7",
+    "vitest": "3.2.6"
   }
 }
